@@ -12,8 +12,12 @@ def flexprice(balance, status=200):
         if req.url.path.endswith("/customers/external/lumen"):
             return httpx.Response(200, json={"id": "cust_1"})
         if req.url.path.endswith("/customers/cust_1/wallets"):
+            # the list endpoint only carries the stored balance, never the real-time one
             return httpx.Response(200, json=[{"id": "wal_1", "credit_balance": "1000",
-                                              "real_time_credit_balance": balance}])
+                                              "real_time_credit_balance": None}])
+        if req.url.path.endswith("/wallets/wal_1/balance/real-time"):
+            return httpx.Response(200, json={"credit_balance": "1000",
+                                             "real_time_credit_balance": balance})
         return httpx.Response(404, json={})
     return httpx.Client(base_url="https://flexprice.test/v1", transport=httpx.MockTransport(handler))
 
