@@ -162,3 +162,7 @@ The Claude Code and Codex agents are created in Band Desktop (Agents › New age
 ## Team
 
 Vidyut Sriram (agents + Band) · Abhinav Dasari (memory + Cognee) · Deekshith Reddy Bhoomireddy (UI/UX) · Rishit Rai (security + billing)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
