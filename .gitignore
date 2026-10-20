@@ -42,3 +42,7 @@ agent_config.yaml
 # outbox and local keep data
 .keep/
 outbox/
+
+# keep runtime data
+.keep/
+outbox/
