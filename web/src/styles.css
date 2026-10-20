@@ -255,3 +255,15 @@ h2, .subject { font-family: var(--body); letter-spacing: -.02em; }
 .stage .legend .k.line { width: 18px; height: 2px; border-radius: 0; background: var(--bad); }
 .readout { margin: 10px 4px 2px; padding: 8px 12px; background: #0E1726; color: #F6F9FC; border-radius: 8px; font-size: 13px; }
 #graph .kind { text-anchor: end; }
+
+/* ---- light hero: soft cyan light beams over a faint dot grid ---- */
+.hero { --cream: #0E1726; --muted: #4F5B6B; --line: rgba(14, 23, 38, .1); --panel: rgba(255, 255, 255, .72); --brass: #0891B2;
+  min-height: clamp(300px, 38vh, 400px); border: 1px solid rgba(14, 23, 38, .08); background:
+    linear-gradient(118deg, rgba(8, 145, 178, .30) 0%, rgba(8, 145, 178, .10) 28%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(62deg, rgba(139, 92, 246, .10) 38%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(135deg, #D7F1F7 0%, #EAF6FA 40%, #F7FAFC 100%);
+  box-shadow: 0 1px 2px rgba(14, 23, 38, .06), 0 16px 40px -16px rgba(14, 23, 38, .2); }
+.hero::before { background: radial-gradient(rgba(14, 23, 38, .16) 1px, transparent 1.3px) 0 0 / 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .35) 70%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .35) 70%, transparent 100%); }
+.hero, .hero h1 { color: #0E1726; }
+.hero .sub { color: #3E4A5A; text-shadow: none; }

@@ -155,3 +155,12 @@ h2 { margin: 0; font: 500 19px/1.2 var(--sans); letter-spacing: -.02em; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* light hero: soft cyan light beams over a faint dot grid (same look as web/) */
+.hero { background: linear-gradient(118deg, rgba(8, 145, 178, .30) 0%, rgba(8, 145, 178, .10) 28%, rgba(255, 255, 255, 0) 52%), linear-gradient(62deg, rgba(139, 92, 246, .10) 38%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #D7F1F7 0%, #EAF6FA 40%, #F7FAFC 100%); border: 1px solid rgba(14, 23, 38, .08); }
+.hero canvas { display: none; }
+.hero::after { inset: 0; height: auto; background: radial-gradient(rgba(14, 23, 38, .16) 1px, transparent 1.3px) 0 0 / 22px 22px; -webkit-mask-image: linear-gradient(180deg, #000, rgba(0, 0, 0, .3) 70%, transparent); mask-image: linear-gradient(180deg, #000, rgba(0, 0, 0, .3) 70%, transparent); }
+.hero .copy { color: var(--fg); }
+.eyebrow { color: var(--fg2); }
+.hero h1 span { color: var(--fg2); }
+.telemetry { color: var(--fg2); } .telemetry b { color: var(--fg); }
