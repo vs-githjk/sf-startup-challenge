@@ -3,6 +3,7 @@ import type { Draft, Memory, Snapshot } from "./api";
 import { pretty, type Conflict, type Convo } from "./derive";
 import { Pipeline, type steps } from "./components/Pipeline";
 import MemoryGraph from "./components/MemoryGraph";
+import LiveGraph from "./components/LiveGraph";
 import { Conflicts, Feed, MemoryRows, Panel } from "./components/Panels";
 import { Connections, CostPanel, type Link, type Stats } from "./components/Tools";
 import type { GLink, GNode } from "./derive";
@@ -187,11 +188,7 @@ export function MemoryMap({ d }: { d: Data }) {
       <Panel id="graph" className="graph wide" title="What the agents know" count={`${d.nodes.length} nodes, ${d.glinks.length} links`} hint="Each hub is a customer, investor or team area. A link from a waiting draft marks the memory it contradicts.">
         <MemoryGraph nodes={d.nodes} links={d.glinks} />
       </Panel>
-      {/* ponytail: a still capture of the Neo4j graph; a live view needs a keep-api /graph endpoint */}
-      <Panel id="neo4j" className="wide" title="Cognee's knowledge graph in Neo4j" count="54 entities, 98 relationships" hint="The graph Cognee builds from every stored fact: customers, investors, people, products and how they connect. Captured from the Neo4j browser.">
-        <img className="neo4j-shot" src="/neo4j-graph.png" alt="Neo4j graph of 54 entities joined by 98 relationships, built by Cognee from company memory" />
-        <div className="actions"><a className="btn" href="http://localhost:7474" target="_blank" rel="noopener noreferrer">Open the live graph in Neo4j</a></div>
-      </Panel>
+      <LiveGraph />
     </div>
   );
 }

@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -262,6 +263,34 @@ def create_app() -> FastAPI:
     @app.get("/events")
     def events(since: int = 0):
         return {"events": store.events(since)}
+
+    # Cognee's knowledge graph as stored in Neo4j, for the web app's live view. Fixed read-only queries,
+    # no user input reaches Cypher. Neo4j's HTTP API keeps this to httpx (no driver dependency).
+    GRAPH_Q = [
+        "MATCH (n:__Node__) RETURN elementId(n), [l IN labels(n) WHERE l <> '__Node__'][0], "
+        "coalesce(n.name, left(n.text, 80), '') LIMIT 200",
+        "MATCH (a:__Node__)-[r]->(b:__Node__) RETURN elementId(a), elementId(b), type(r) LIMIT 500",
+    ]
+
+    @app.get("/graph")
+    async def graph():
+        url = os.environ.get("NEO4J_HTTP_URL", "http://127.0.0.1:7474").rstrip("/") + "/db/neo4j/tx/commit"
+        auth = (os.environ.get("NEO4J_USER", "neo4j"), os.environ.get("NEO4J_PASSWORD", ""))
+        try:
+            async with httpx.AsyncClient(timeout=5) as c:
+                r = await c.post(url, json={"statements": [{"statement": q} for q in GRAPH_Q]}, auth=auth)
+            r.raise_for_status()
+            body = r.json()
+            if body.get("errors"):
+                raise ValueError("neo4j query error")
+        except Exception as exc:
+            log.warning("graph failed: %s", type(exc).__name__)
+            raise HTTPException(502, "graph store unavailable") from exc
+        nodes_rows, link_rows = ([x["row"] for x in res["data"]] for res in body["results"])
+        nodes = [{"id": i, "type": t or "Node", "name": n or ""} for i, t, n in nodes_rows]
+        ids = {n["id"] for n in nodes}
+        links = [{"a": a, "b": b, "type": t} for a, b, t in link_rows if a in ids and b in ids]
+        return {"nodes": nodes, "links": links}
 
     dist = Path("web/dist")  # the built React app wins; the plain ui/ folder is the fallback
     ui = dist if (dist / "index.html").is_file() else Path("ui")
