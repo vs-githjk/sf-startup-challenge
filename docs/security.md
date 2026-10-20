@@ -15,7 +15,7 @@ The organizers score repos with [app-security-score](https://github.com/javierga
 
 | Practice | How |
 |---|---|
-| Small, pinned dependency tree | Python only, `uv` with exact `==` pins and a committed `uv.lock`; no npm in the repo; the UI is plain HTML, CSS and JS with no build step |
+| Small, pinned dependency tree | Python with `uv`, exact `==` pins, a committed `uv.lock` and `requirements.txt`; the web app (`web/`) uses 2 runtime npm packages (react, react-dom) pinned in a committed lockfile, scanned clean by Snyk |
 | No injection | Parameterised SQL and Cypher only; no `shell=True`, `eval`, `exec` or `pickle` on untrusted data |
 | Untrusted text stays inert | Transcripts and LLM output are rendered with `textContent`, never `innerHTML`; never passed to a shell or file path |
 | Input validation | pydantic models with length limits and allowed values at every API edge |
@@ -26,4 +26,4 @@ The organizers score repos with [app-security-score](https://github.com/javierga
 
 - **Cognee runs isolated as a container** (`cognee/cognee:1.6.5`, pinned tag, bound to 127.0.0.1, authentication and multi-tenancy off because it is a single local instance, local file paths and HTTP fetching disabled). Our repo's dependency tree (`requirements.txt`, 62 packages) no longer contains `cognee` or its heavy transitive packages (pillow, onnxruntime, litellm, diskcache), and no longer contains `langchain-community` (band-sdk is installed without its `langgraph` extra; we pin only `langgraph`, `langchain`, `langchain-core` and `langchain-anthropic`, the packages `agents/sdk/run.py` imports). Scan the image separately with Snyk Container: `snyk container test cognee/cognee:1.6.5`.
 - Known risk in the container: `diskcache` (GHSA-w8v5-vhqr-4h9v, unsafe pickle deserialization, moderate, no fix released) lives inside the Cognee image. We never send untrusted pickles to it; its cache is internal to the container.
-- Final scorer result: _filled in at feature freeze from the real run._
+- Final scorer result: **9.8 out of 10** on the organizers' `app-security-score` (recorded in `plan/progress.md`).

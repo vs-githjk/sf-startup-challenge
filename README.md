@@ -2,7 +2,7 @@
 
 **Your agents never tell an investor something your customers contradict.**
 
-PrismKeep is a team of six AI agents that runs a founder's follow-ups. They work together in one Band room and share one Cognee memory of every investor meeting, customer call and support ticket. Before anything goes out, a second agent checks every claim against everything any stakeholder has said, and nothing is sent until the founder approves it.
+PrismKeep is a team of six AI agents that runs a founder's follow-ups. They work together in one Band room and share one Cognee memory of every investor meeting, customer call and support ticket. Before anything goes out, a second agent checks every claim against the shared memory of every stakeholder, and nothing is sent until the founder approves it.
 
 Built at the SF Startup Challenge (AWS Builder Loft, Oct 20, 2026) with **Band Desktop**, **Cognee**, **Flexprice** and **Snyk**. All companies, people and numbers in the demo are synthetic.
 
@@ -111,8 +111,8 @@ Every tool today covers one side of a founder's world. None checks an outbound m
 - **Band Desktop.** Two rooms (Hq, Eng); six agents built with three tools (Claude Code, Codex, LangGraph via `band-sdk`); a shared work board (To-do → Done); @mention handoffs; founder approvals through `band ask` and permission prompts; per-agent and per-room cost in Analytics.
 - **Cognee.** Version 1.6.5 runs as its own container with **Neo4j** as the graph store. Agents write memory while they work (`remember`) and recall before they act (`recall`), both across a restart and across agents. Founder corrections use `forget` + `improve`. Datasets: `company`, `rel_<counterparty>`, `eng_security`. Measured: remember about 4 s, recall about 1 s.
 - **Flexprice.** Meters `agent_tokens`, `agent_tasks` and `approved_outbound` for a workspace customer on a 1,000-credit prepaid wallet; the credit gate reads the live wallet balance before deep research. See `keep/billing.py` and `keep/flexprice_setup.py`.
-- **Snyk.** A Security Reviewer agent in the room runs Snyk Code on every fix, blocks the work item until it's clean, and stores repeat findings in Cognee. Our own repo scores **9.8 out of 10** on the organizers' `app-security-score`. Moving Cognee into its own container cut our Python dependency tree from 213 to 61 packages, and the Cognee image is scanned separately with Snyk Container. The repo is monitored from the Snyk dashboard, and Snyk's own fix PR (filelock) was applied within minutes. Details: [docs/security.md](docs/security.md).
-- **Prism (our meeting product).** The Chief of Staff pulls meetings through Prism's read-only MCP (`list_recent_meetings`, `get_meeting`). Prism records calls with its Recall.ai bot, so in production transcripts arrive automatically.
+- **Snyk.** A Security Reviewer agent in the room runs Snyk Code on every fix, blocks the work item until it's clean, and stores repeat findings in Cognee. Our own repo scores **9.8 out of 10** on the organizers' `app-security-score`. Moving Cognee into its own container cut our Python dependency tree from 213 to 62 packages, and the Cognee image is scanned separately with Snyk Container. The repo is monitored from the Snyk dashboard, and Snyk's own fix PR (filelock) was applied within a minute of opening. Details: [docs/security.md](docs/security.md).
+- **Prism (our meeting product).** The Chief of Staff pulls meetings through Prism's read-only MCP (`list_recent_meetings`, `get_meeting`). Prism already records calls with its Recall.ai bot; today the Chief of Staff pulls them through Prism's MCP, and automatic push is next.
 
 
 ## Results from today's run
@@ -121,7 +121,7 @@ Every tool today covers one side of a founder's world. None checks an outbound m
 - **Real Cognee memory** in Docker with Neo4j: remember about 4 s, recall about 1 s; 39 live memories across 4 datasets (company, rel_acme, rel_northline, eng_security) after one demo run.
 - The Listener flagged a **cross-meeting contradiction without being asked**; the Brain **forgot 5 stale facts** on one founder correction and limited what the draft could claim.
 - Every outbound draft cleared with **0 unverified claims**, approved by the founder, **sha256 match** on send.
-- **Snyk:** 9.8/10 on the organizers' scorer; dependencies cut from 213 to 61 by isolating Cognee; Snyk's own fix PR applied within minutes; the Security Reviewer blocked a fix until a path traversal was gone.
+- **Snyk:** 9.8/10 on the organizers' scorer; dependencies cut from 213 to 62 by isolating Cognee; Snyk's own fix PR applied within a minute of opening; the Security Reviewer blocked a fix until a path traversal was gone.
 - **Cost per agent** visible in Band (chief-of-staff USD 0.54, drafter USD 0.31 for one investor follow-up); every task metered in **Flexprice**.
 
 ## Business
@@ -129,7 +129,7 @@ Every tool today covers one side of a founder's world. None checks an outbound m
 - **Buyer:** founders of 2–30 person B2B startups who run fundraising, sales and support themselves. They feel it most during a raise.
 - **Pricing:** **Fundraise Sprint** $199 for 8 weeks (the entry offer) · **Founder** $99/month (100 conversations, Prism capture, approvals) · **Team** $299/month (5 seats, customer success + Snyk-gated fixes) · overage metered in Flexprice.
 - **Expansion:** accelerators and VC platform teams license it for their portfolio, because investors want consistent, truthful updates.
-- **Our edge:** one memory across every stakeholder, a tamper-evident record of every send, capture that already runs in Prism, and security built into the workflow.
+- **Our edge:** one memory across every stakeholder, a audit record of every send, capture that already runs in Prism, and security built into the workflow.
 
 ## Run it
 
