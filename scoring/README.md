@@ -24,7 +24,7 @@ Points = score x weight / 5. Max is 130 with both bonuses.
 | Viability | 20 | 3 | 12.0 | 4 | 16 | Buyer, price, why now, competitor research | Prices not verified live; no customer evidence |
 | Execution and demo | 20 | 2 | 8.0 | 4 | 16 | UI built and checked in demo mode | Not tested on live keep-api; no end-to-end run; no video |
 | Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction check designed and drawn | Brain never produced a real block |
-| Flexprice | 10 | 3 | 6.0 | 4 | 8 | Rishit: workspace customer, 3 meters, 1,000 credit wallet, gate reads live balance | I have not re-run it; gate not shown denying; no dashboard capture |
+| Flexprice | 10 | 3 | 6.0 | 4 | 8 | Setup ran against the real Flexprice account (customer, 3 meters, plan, subscription, wallet); I sent one cost event, flexprice_synced True; gate reads the live wallet | Gate not yet shown denying; no dashboard capture; local and Flexprice balances differ (async) |
 | Snyk | 10 | 2 | 4.0 | 4 | 8 | Snyk Code ran on our repo: 0 issues | Dependency score is bad (section 3); reviewer agent never run in Band |
 | **Total** | **130** | | **49.0** | | **106** | | |
 
