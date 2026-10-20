@@ -3,7 +3,6 @@ import type { Draft, Memory, Snapshot } from "./api";
 import { pretty, type Conflict, type Convo } from "./derive";
 import { Pipeline, type steps } from "./components/Pipeline";
 import MemoryGraph from "./components/MemoryGraph";
-import LiveGraph from "./components/LiveGraph";
 import { Conflicts, Feed, MemoryRows, Panel } from "./components/Panels";
 import { Connections, CostPanel, type Link, type Stats } from "./components/Tools";
 import type { GLink, GNode } from "./derive";
@@ -184,12 +183,9 @@ export function Conversations({ d }: { d: Data }) {
 
 export function MemoryMap({ d }: { d: Data }) {
   return (
-    <div className="stack">
-      <Panel id="graph" className="graph wide" title="What the agents know" count={`${d.nodes.length} nodes, ${d.glinks.length} links`} hint="Each hub is a customer, investor or team area. A link from a waiting draft marks the memory it contradicts.">
-        <MemoryGraph nodes={d.nodes} links={d.glinks} />
-      </Panel>
-      <LiveGraph />
-    </div>
+    <Panel id="graph" className="graph wide" title="What the agents know" count={`${d.nodes.length} nodes, ${d.glinks.length} links`} hint="Each hub is a customer, investor or team area. A link from a waiting draft marks the memory it contradicts.">
+      <MemoryGraph nodes={d.nodes} links={d.glinks} />
+    </Panel>
   );
 }
 

@@ -37,7 +37,6 @@ One screen per job, with the agents working in Band behind every screen: **Needs
 | <img src="docs/img/app-promises.png" width="430" alt="Promises screen: every promise with owner, due date and overdue status, filterable by customer or investor"> | **Promises.** Every promise to every customer and investor, with owner, due date and status. Filter by relationship or search. |
 | <img src="docs/img/app-conversations.png" width="430" alt="Conversations screen: Prism recordings and tickets with what the Listener extracted"> | **Conversations.** Meetings recorded by Prism and pasted tickets, each with what the Listener extracted. One click hands a follow-up or a Brain check to the agents in Band. |
 | <img src="docs/img/app-memory-map.png" width="430" alt="Memory map: datasets, the memories they hold, and the draft that contradicts one"> | **Memory map.** What each relationship's memory holds; a red line joins a waiting draft to the memory it contradicts. |
-| <img src="docs/img/app-knowledge-graph.png" width="430" alt="Cognee's knowledge graph read live from Neo4j: 54 nodes and 98 relationships"> | **Cognee's knowledge graph, live from Neo4j.** keep-api's `/graph` reads the graph Cognee builds (people, companies, promises and how they connect) straight from Neo4j. |
 
 ## The problem
 
