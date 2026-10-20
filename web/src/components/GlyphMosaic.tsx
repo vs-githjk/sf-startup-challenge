@@ -4,12 +4,14 @@ import type { GLink, GNode } from "../derive";
 import type { Hud } from "./AsciiField";
 
 // Glyph mosaic hero. One letter repeated on a grid is the only pixel, painted tone on tone over a light to dark gradient.
-// A memory orb is lit and shaded per cell, its texture turns, it leans against the pointer, and the light follows the pointer.
+// A glass prism takes a red beam of promises and splits it into a spectrum. It leans against the pointer, a glint follows the pointer,
+// and the spectrum fans with the pointer's height.
 // The pointer leaves a stepped trail of red letters (the promise beam) that fades. A band of brighter letters sweeps the grid.
 // With no pointer, a virtual one wanders so the field keeps moving. Memories are small colored clusters.
 
 const LETTER = "P", CW = 10, CH = 13, REACH = 130, TRAIL_MS = 1500;
 const INK = [239, 231, 214], BRASS = [224, 169, 59], RED = [238, 109, 87];
+const BANDS = [RED, BRASS, [134, 191, 141], [143, 180, 217], [180, 155, 214]];
 const KIND: Record<string, number[]> = { promise: BRASS, risk: RED, draft: [250, 247, 240], claim: [143, 180, 217], finding: [180, 155, 214], decision: [134, 191, 141], correction: [134, 191, 141] };
 // Must match the .hero background gradient in styles.css.
 const STOPS: [number, number[]][] = [[0, [232, 227, 214]], [0.22, [189, 184, 171]], [0.45, [110, 106, 96]], [0.72, [26, 24, 21]], [0.92, [13, 12, 10]], [1, [13, 12, 10]]];
@@ -109,26 +111,43 @@ export default function GlyphMosaic({ nodes, onHud }: { nodes: GNode[]; links: G
         }
       }
 
-      // the orb: lit sphere, turning texture, leaning against the pointer, light toward the pointer
-      const R = Math.min(zone * 0.3, W * 0.12), ocx = W * 0.6 - (sx - W / 2) * 0.16, ocy = zone * 0.6 - (sy - zone / 2) * 0.08;
-      let lx = (sx - ocx) / (W * 0.5), ly = (sy - ocy) / (zone * 0.5); const ll = Math.hypot(lx, ly, 0.7); lx /= ll; ly /= ll; const lz = 0.7 / ll;
-      for (let r = Math.floor((ocy - R) / CH); r <= Math.ceil((ocy + R) / CH); r++) for (let c = Math.floor((ocx - R) / CW); c <= Math.ceil((ocx + R) / CW); c++) {
+      // the prism: a glass triangle takes the red beam of promises on its left face and splits it into a spectrum
+      const S = Math.min(zone * 0.43, W * 0.17), pcx = W * 0.58 - (sx - W / 2) * 0.1, pcy = zone * 0.55 - (sy - zone / 2) * 0.06;
+      const A = [pcx, pcy - S], B = [pcx - S * 0.92, pcy + S * 0.66], C = [pcx + S * 0.92, pcy + S * 0.66];
+      const den = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1]);
+      const glintX = lerp(B[0], C[0], idle ? 0.5 + 0.5 * Math.sin(t * 0.7) : Math.max(0, Math.min(1, (sx - B[0]) / (C[0] - B[0]))));
+      for (let r = Math.floor((A[1] - 6) / CH); r <= Math.ceil((B[1] + 6) / CH); r++) for (let c = Math.floor((B[0] - 6) / CW); c <= Math.ceil((C[0] + 6) / CW); c++) {
         if (c < 0 || r < 0 || c >= cols || r >= rows) continue;
-        const x = c * CW, y = r * CH, nx = (x + CW / 2 - ocx) / R, ny = (y + CH / 2 - ocy) / R, r2 = nx * nx + ny * ny;
-        if (r2 > 1 || (r2 > 0.86 && h2(c, r) > 0.62) || blocked(x, y)) continue; // ragged rim
-        const nz = Math.sqrt(1 - r2), lon = Math.atan2(nx, nz) + t * 0.32, lat = Math.asin(ny);
-        const tex = 0.55 * noise(lon * 2.4, lat * 2.8) + 0.45 * noise(lon * 5.1 + 7, lat * 5.7);
-        const b = Math.max(0.04, Math.min(1, (0.16 + 0.84 * Math.max(0, nx * lx + ny * ly + nz * lz)) * (0.5 + 0.7 * tex)));
-        const k = Math.pow(b, 1.35); let col = mix([9, 9, 11], [112, 108, 100], k); if (b > 0.82) col = mix(col, BRASS, (b - 0.82) * 1.6);
-        ctx.fillStyle = rgba(col, 0.96); ctx.fillText(LETTER, x, y);
+        const x = c * CW, y = r * CH, qx = x + CW / 2, qy = y + CH / 2;
+        const l1 = ((B[1] - C[1]) * (qx - C[0]) + (C[0] - B[0]) * (qy - C[1])) / den, l2 = ((C[1] - A[1]) * (qx - C[0]) + (A[0] - C[0]) * (qy - C[1])) / den, l3 = 1 - l1 - l2;
+        if (l1 < 0 || l2 < 0 || l3 < 0 || blocked(x, y)) continue;
+        const edge = Math.min(l1, l2, l3), rim = 1 - Math.min(1, edge / 0.09);               // bright edges, like cut glass
+        const face = 0.35 + 0.4 * (l3 > l2 ? 1 : 0), glint = Math.exp(-(((qx - glintX) / (S * 0.28)) ** 2));
+        const k = Math.min(1, 0.18 + face * 0.35 + rim * 0.55 + glint * 0.5 + 0.12 * noise(qx * 0.05 + t * 0.4, qy * 0.05));
+        let col = mix([6, 6, 8], [74, 70, 64], Math.min(1, k * 0.8)); col = mix(col, [226, 221, 206], rim * 0.85); if (glint > 0.45) col = mix(col, BRASS, Math.min(0.8, glint * 0.7));
+        ctx.fillStyle = rgba(col, 0.97); ctx.fillText(LETTER, x, y);
       }
-      // a thin drip of letters falls from the orb
-      for (let k = 0; k < 16; k++) {
-        const fall = ((t * 34 + k * 26) % 380), y = Math.round((ocy + R * 0.9 + fall) / CH) * CH;
-        const x = Math.round((ocx + Math.sin(k * 1.7 + t * 0.6) * 22) / CW) * CW;
-        if (y > zone || h2(k, Math.floor(t * 0.7)) > 0.7 || blocked(x, y)) continue;
-        ctx.fillStyle = rgba([40, 40, 42], 0.8 * (1 - fall / 380)); ctx.fillText(LETTER, x, y);
-      }
+      const at = (p: number[], q: number[], u: number) => [lerp(p[0], q[0], u), lerp(p[1], q[1], u)];
+      const E1 = at(A, B, 0.5), E2 = at(A, C, 0.5);
+      const ray = (x0: number, y0: number, x1: number, y1: number, color: (u: number, i: number) => [number[], number]) => {
+        let c0 = Math.floor(x0 / CW), r0 = Math.floor(y0 / CH); const c1 = Math.floor(x1 / CW), r1 = Math.floor(y1 / CH);
+        const dx = Math.abs(c1 - c0), dy = -Math.abs(r1 - r0), sxn = c0 < c1 ? 1 : -1, syn = r0 < r1 ? 1 : -1, total = Math.max(1, dx + Math.abs(dy));
+        let err = dx + dy;
+        for (let i = 0; i < 400; i++) {
+          if (c0 >= 0 && r0 >= 0 && c0 < cols && r0 < rows && !blocked(c0 * CW, r0 * CH)) { const [col, a] = color(i / total, i); ctx.fillStyle = rgba(col, a); ctx.fillText(LETTER, c0 * CW, r0 * CH); }
+          if (c0 === c1 && r0 === r1) break;
+          const e2 = 2 * err; if (e2 >= dy) { err += dy; c0 += sxn; } if (e2 <= dx) { err += dx; r0 += syn; }
+        }
+      };
+      // incoming beam (aim shifts with the pointer) and its path through the glass
+      ray(0, E1[1] - zone * 0.16 + (sy - zone / 2) * 0.12, E1[0], E1[1], (u, i) => [RED, 0.5 + 0.5 * Math.sin(i * 0.45 - t * 4.2)]);
+      ray(E1[0], E1[1], E2[0], E2[1], (u, i) => [mix(RED, BRASS, u), 0.6 + 0.4 * Math.sin(i * 0.5 - t * 4.2)]);
+      // the spectrum: five rays, fanned by the pointer's height
+      const theta = 0.12 + ((sy - pcy) / zone) * 0.22;
+      BANDS.forEach((col, k) => {
+        const ang = theta + (k - 2) * 0.085, len = W - E2[0] + 20;
+        ray(E2[0], E2[1], E2[0] + Math.cos(ang) * len, E2[1] + Math.sin(ang) * len, (u, i) => [col, (0.5 + 0.5 * (0.5 + 0.5 * Math.sin(i * 0.4 - t * 3 + k))) * (1 - u * 0.35)]);
+      });
 
       // memories: small colored clusters, brighter when the pointer is near
       const stars = ns.filter((n) => n.type !== "hub").map((n) => ({ n, x: Math.floor((0.04 + 0.92 * hash(n.id)) * cols) * CW, y: Math.floor((0.1 + 0.8 * hash(`${n.id}#`)) * (zone / CH)) * CH }));
