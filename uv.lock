@@ -544,6 +544,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/38/23/8e9e986a5b8be1399d427aa0a18a7661edba2c8ac066ee74b956a9fc2bd8/cognee-1.6.5-py3-none-any.whl", hash = "sha256:aaef9fdc02f542b1d125cde21759dde2fac56355d8928e39c734e7b5c6705eca", size = 22235030, upload-time = "2026-10-16T20:15:46.74Z" },
 ]
 
+[package.optional-dependencies]
+neo4j = [
+    { name = "neo4j" },
+]
+
 [[package]]
 name = "colorama"
 version = "0.4.6"
@@ -1962,6 +1967,18 @@ wheels = [
 ]
 
 [[package]]
+name = "neo4j"
+version = "5.28.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5d/e2/62b2ced8591abf5aabb4bce6160dacb75e53992875ee6aec03fb5ea2dc0d/neo4j-5.28.8.tar.gz", hash = "sha256:b2531e5fb618bd1b0f5f3d62b5f9be480a66969396f82c41caaf2f3539f7e72c", size = 234107, upload-time = "2026-10-15T11:02:32.284Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/5b/c3a3fc2604cd578c27f8d36de7973093ebc7c148f749be9db067dd63a00a/neo4j-5.28.8-py3-none-any.whl", hash = "sha256:f8ecdad94be88f0f7a766a284a9a7023db9e7bd92d1b0a4fe6d6e191feb97f91", size = 314703, upload-time = "2026-10-15T11:02:29.605Z" },
+]
+
+[[package]]
 name = "networkx"
 version = "3.7"
 source = { registry = "https://pypi.org/simple" }
@@ -2734,7 +2751,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "band-sdk", extra = ["langgraph"] },
-    { name = "cognee" },
+    { name = "cognee", extra = ["neo4j"] },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -2750,7 +2767,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = "==1.16.0" },
     { name = "band-sdk", extras = ["langgraph"], specifier = "==6.0.1" },
-    { name = "cognee", specifier = "==1.6.5" },
+    { name = "cognee", extras = ["neo4j"], specifier = "==1.6.5" },
     { name = "fastapi", specifier = "==0.156.0" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "pydantic", specifier = "==2.14.1" },
