@@ -18,7 +18,7 @@ def backend(handler):
 
 def test_remember_posts_multipart_and_finds_its_own_data_id():
     seen = {}
-    name = "text_" + hashlib.md5(b"Acme wants SOC2").hexdigest()
+    name = "text_" + hashlib.md5(b"Acme wants SOC2", usedforsecurity=False).hexdigest()
 
     def handler(req):
         if req.url.path == "/api/v1/remember":
