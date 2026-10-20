@@ -7,6 +7,8 @@ from pathlib import Path
 
 import httpx
 
+from .paths import confine
+
 KINDS = ["promise", "claim", "risk", "decision", "finding", "correction"]
 
 
@@ -79,7 +81,7 @@ def call(a: argparse.Namespace) -> httpx.Response:
         return c.post(f"/drafts/{a.draft}/send")
     if a.cmd == "drafts":
         return c.get("/drafts")
-    body = Path(a.body_file).resolve().read_text(encoding="utf-8")
+    body = confine(a.body_file).read_text(encoding="utf-8")
     return c.post("/drafts", json={"to_name": a.to, "subject": a.subject, "body": body})
 
 

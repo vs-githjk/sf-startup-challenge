@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .paths import confine
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS memories(id TEXT PRIMARY KEY, dataset TEXT, kind TEXT, text TEXT,
   source TEXT, cognee_data_id TEXT, created_at TEXT, forgotten_at TEXT);
@@ -24,7 +26,7 @@ def now() -> str:
 
 
 def data_dir() -> Path:
-    return Path(os.environ.get("KEEP_DATA_DIR", ".keep")).resolve()
+    return confine(os.environ.get("KEEP_DATA_DIR", ".keep"))
 
 
 class Store:

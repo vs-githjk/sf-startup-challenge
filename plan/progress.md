@@ -10,7 +10,6 @@ Written by the main session after every checkpoint. One line per task, newest st
   - Snyk Code (our code): 4 low, 0 medium/high, all python/PT on paths from env vars or CLI args (keep/api.py:78, keep/api.py:199, keep/store.py:27, keep/cli.py:82). Code-only score 9.6.
   - Snyk Open Source: `snyk test --all-projects` finds no supported files. Snyk does not read pyproject.toml + uv.lock, so the organizers' scorer will report "Dependency scan did not run" under Notes.
   - Same tree exported to requirements.txt and scanned outside the repo: 210 deps, 5 critical, 18 high, 7 medium, 2 low (more than 10 above low, so 0 if counted). Sources: pillow 12.3.0 (fix 13.0.0, blocked by fastembed <13), onnxruntime 1.23.2 (fix 1.24.1, blocked by cognee <=1.23.2 on py3.12), litellm 1.106.0 and diskcache 5.6.3 via cognee (no fix), langchain-community 0.4.2 via band-sdk[langgraph] (critical SSRF, no fix).
-
 - cognee image (12:20, `snyk container test cognee/cognee:main`, floating tag; rescan the tag compose pins): Debian 12 OS packages only, 143 deps, 1 critical (zlib, no fix), 9 high (util-linux, zlib, expat, cyrus-sasl2: no fix; pcre2: fix 10.42-1+deb12u1), 7 medium, 208 low. Scanned separately; not part of the organizers' repo score.
 
 ## Rulings
