@@ -25,9 +25,8 @@ if command -v snyk >/dev/null; then ok "snyk $(snyk --version)"; else
   npm i -g snyk && ok "snyk installed via npm"
 fi
 
-echo "== Python env (uv) + Cognee"
+echo "== Python env (uv)"
 uv sync
-uv run python -c "import importlib.metadata as m; print('  cognee', m.version('cognee'))"
 
 echo "== .env"
 if [ -f .env ]; then ok ".env exists"; else cp .env.example .env && warn "created .env from .env.example — fill in keys"; fi

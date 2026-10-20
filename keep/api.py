@@ -1,9 +1,11 @@
 """keep-api: one process owns Cognee; agents talk to it over HTTP."""
+import asyncio
 import hashlib
 import logging
 import os
 import re
 import uuid
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -23,6 +25,9 @@ Kind = Literal["promise", "claim", "risk", "decision", "finding", "correction"]
 Name = Field(min_length=1, max_length=120)
 Short = Field(default="", max_length=120)
 UUID_RE = re.compile(r"^[0-9a-f-]{36}$")
+# ponytail: candidates pulled from Cognee before ledger scoping; facts ranked below this are
+# missed once memory holds more chunks. Upgrade: node_set per dataset + node_name filter.
+RECALL_POOL = 100
 
 
 class RememberIn(BaseModel):
@@ -78,11 +83,14 @@ def create_app() -> FastAPI:
     wallet = billing.Wallet(store)
     outbox = confine(os.environ.get("KEEP_OUTBOX_DIR", "outbox"))
     customer = os.environ.get("FLEXPRICE_CUSTOMER_ID", "lumen")
+    # Concurrent first writes to a dataset race on its creation in Cognee (PermissionDeniedError).
+    write_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
     @asynccontextmanager
     async def lifespan(_app):
         if os.environ.get("KEEP_BACKEND", "cognee") == "cognee" and os.environ.get("KEEP_WARMUP") == "1":
-            await backend.remember("keep_warmup", "Keep warm-up note.")  # same loop as requests
+            cid = await backend.remember("keep_warmup", "Keep warm-up note.")  # same loop as requests
+            await backend.forget(cid, "keep_warmup")  # stays warm, leaves no stray node in Neo4j
         yield
 
     app = FastAPI(title="keep-api", lifespan=lifespan)
@@ -100,7 +108,8 @@ def create_app() -> FastAPI:
     @app.post("/remember")
     async def remember(b: RememberIn):
         try:
-            cid = await backend.remember(b.dataset, b.text)
+            async with write_locks[b.dataset]:
+                cid = await backend.remember(b.dataset, b.text)
         except Exception as exc:
             log.warning("remember failed: %s", type(exc).__name__)
             raise HTTPException(502, "memory backend failed") from exc
@@ -113,23 +122,25 @@ def create_app() -> FastAPI:
         for d in b.datasets:
             if not re.match(DATASET, d):
                 raise HTTPException(422, "bad dataset name")
+        live = [m for ds in b.datasets for m in store.memories(dataset=ds)]
         try:
-            raw = await backend.recall(b.datasets, b.query, b.top)
+            # nothing live in these datasets: skip Cognee (it raises on names it never saw)
+            raw = await backend.recall(b.datasets, b.query, RECALL_POOL) if live else []
         except Exception as exc:
             log.warning("recall failed: %s", type(exc).__name__)
             raise HTTPException(502, "memory backend failed") from exc
-        live = [m for ds in b.datasets for m in store.memories(dataset=ds)]
-        dead = [m for ds in b.datasets for m in store.memories(dataset=ds, include_forgotten=True)
-                if m["forgotten_at"]]
-        results = []
+        # The ledger is the scope: hits from other datasets, forgotten facts and dupes drop out.
+        by_id: dict[str, dict] = {}
+        for m in live:
+            by_id.setdefault(m["id"], m)
+            if m["cognee_data_id"]:
+                by_id.setdefault(m["cognee_data_id"], m)
+        results, seen = [], set()
         for r in raw:
-            hit = next((m for m in live if m["id"] == r["data_id"] or m["text"] in r["text"]
-                        or r["text"] in m["text"]), None)
-            if hit is None and any(m["text"] in r["text"] or r["text"] in m["text"] for m in dead):
-                continue  # forgotten: never return it
-            if hit:
-                r = {**r, "data_id": hit["id"], "kind": hit["kind"], "dataset": hit["dataset"]}
-            results.append(r)
+            hit = by_id.get(r["data_id"])
+            if hit and hit["id"] not in seen:
+                seen.add(hit["id"])
+                results.append({**r, "data_id": hit["id"], "kind": hit["kind"], "dataset": hit["dataset"]})
         store.event("recall", "", {"datasets": b.datasets, "query": b.query[:200], "n": len(results)})
         return {"results": results[: b.top]}
 
@@ -139,22 +150,31 @@ def create_app() -> FastAPI:
         if not m:
             raise HTTPException(404, "unknown data_id")
         store.mark_forgotten(m["id"])
-        try:
-            await backend.forget(m["cognee_data_id"])
-        except Exception as exc:  # ledger already hides it from recall
-            log.warning("backend forget failed: %s", type(exc).__name__)
+        cid = m["cognee_data_id"]
+        # One text is one Cognee item however often or wherever it was remembered: keep it while
+        # any copy is live, then drop it from every dataset that held a copy.
+        copies = store.run("SELECT dataset, forgotten_at FROM memories WHERE cognee_data_id=?", (cid,))
+        if cid and all(c["forgotten_at"] for c in copies):
+            for ds in sorted({c["dataset"] for c in copies}):
+                try:
+                    await backend.forget(cid, ds)
+                except Exception as exc:  # ledger already hides it from recall
+                    log.warning("backend forget failed: %s", type(exc).__name__)
         store.event("forget", "", {"data_id": m["id"], "dataset": m["dataset"]})
         return {"forgotten": m["id"]}
 
     @app.post("/improve")
     async def improve(b: ImproveIn):
+        if not store.memories(dataset=b.dataset, include_forgotten=True):
+            raise HTTPException(404, "nothing remembered in this dataset")
         try:
-            await backend.improve(b.dataset, b.feedback)
+            async with write_locks[b.dataset]:
+                stages = await backend.improve(b.dataset, b.feedback)
         except Exception as exc:
             log.warning("improve failed: %s", type(exc).__name__)
             raise HTTPException(502, "memory backend failed") from exc
-        store.event("improve", "", {"dataset": b.dataset, "feedback": b.feedback[:200]})
-        return {"ok": True}
+        store.event("improve", "", {"dataset": b.dataset, "feedback": b.feedback[:200], "stages": stages})
+        return {"ok": True, "stages": stages}
 
     @app.get("/memories")
     def memories(dataset: str | None = None, kind: Kind | None = None):

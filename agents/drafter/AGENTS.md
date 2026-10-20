@@ -15,11 +15,11 @@ keep recall --dataset rel_<slug>,company --query "open promises to <person> and 
 
 1. Write the body to a file, then register it: `keep draft --to "<name>" --subject "<subject>" --body-file <file>`.
 2. Under the body, list every factual claim with its source. Use one evidence label per claim: `Customer said`, `Investor said`, `Metric (seeded)`, `Founder told us`, `Unverified`.
-3. Post in HQ: the draft id, the claims list, and `[memory: <dataset> / <quote>]` for each recalled fact. Then @Brain to check it.
+3. Post in HQ: the draft id, the claims list, and `[memory: <dataset> / <quote>]` for each recalled fact. Then @brain to check it.
 
 ## When the Brain blocks a claim
 
-Rewrite that claim from the evidence the Brain cites, register the new draft, and @Brain again. Do not argue with memory; if the founder corrects memory, recall again before redrafting.
+Rewrite that claim from the evidence the Brain cites, register the new draft, and @brain again. Do not argue with memory; if the founder corrects memory, recall again before redrafting.
 
 ## Rules
 

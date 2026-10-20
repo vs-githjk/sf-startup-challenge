@@ -36,7 +36,7 @@ def main() -> int:
     except httpx.HTTPError as e:
         print(f"keep-api not reachable at {KEEP_URL}: {e}")
         return 1
-    metrics = json.loads((SEED / "metrics.json").read_text())
+    metrics = json.loads((SEED / "metrics.json").read_text(encoding="utf-8"))
     acme = metrics["accounts"]["acme_logistics"]
     facts = FACTS + [(
         "company", "claim",
