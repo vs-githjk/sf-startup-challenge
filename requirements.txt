@@ -42,7 +42,7 @@ docstring-parser==0.18.0
     # via anthropic
 fastapi==0.156.0
     # via sf-startup-challenge
-filelock==3.32.7
+filelock==4.2.1
     # via band-sdk
 h11==0.16.0
     # via
