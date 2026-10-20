@@ -1,7 +1,7 @@
 """Run a PrismKeep LangGraph agent (Listener or Brain) in Band.
 
-    uv run python -m agents.sdk.run listener
-    uv run python -m agents.sdk.run brain
+    uv run --env-file .env python -m agents.sdk.run listener
+    uv run --env-file .env python -m agents.sdk.run brain
 
 Needs: keep-api running (KEEP_URL), ANTHROPIC_API_KEY, and the agent's id and key in
 agent_config.yaml (register at app.band.ai/agents > Connect Agent).
@@ -61,7 +61,7 @@ def improve(dataset: str, feedback: str) -> dict:
 def build(role: str) -> Agent:
     agent_id, api_key = load_agent_config(role)
     adapter = LangGraphAdapter(
-        config=LangGraphAdapterConfig(custom_section=(PROMPTS / ROLES[role]).read_text()),
+        config=LangGraphAdapterConfig(custom_section=(PROMPTS / ROLES[role]).read_text(encoding="utf-8")),
         llm=ChatAnthropic(model=MODEL, max_tokens=2048),
         additional_tools=[remember, recall, forget, improve],
         capabilities={Capability.TASKS},

@@ -94,3 +94,5 @@ Record every scorer run here and in `plan/progress.md`. Never write a number tha
 | Time | Raw `snyk test` | `snyk code test` | Scorer result | Note |
 |---|---|---|---|---|
 | baseline | | | | |
+
+| 2026-10-20 after path fix | not scanned (Snyk service 503, uv.lock) | 0 issues (was 4 low) | not run | keep/paths.py confines env and CLI paths |

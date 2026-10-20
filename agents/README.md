@@ -8,12 +8,12 @@ Six agents built with three tools, in two Band rooms. Every agent reads and writ
 | Drafter | Codex | HQ | `drafter/AGENTS.md` | Band Desktop › New agent › Codex, working dir `agents/drafter/` |
 | Fixer | Codex | Eng | `fixer/AGENTS.md` | Band Desktop › New agent › Codex, working dir is the `lumen-app` checkout |
 | Security Reviewer | Claude Code + Snyk | Eng, HQ | `security_reviewer/CLAUDE.md` | Claude Code in `agents/security_reviewer/`, then `/jam as security-reviewer` |
-| Listener | LangGraph (Band SDK) | HQ | `prompts/listener.md` | `uv run python -m agents.sdk.run listener` |
-| Brain | LangGraph (Band SDK) | HQ | `prompts/brain.md` | `uv run python -m agents.sdk.run brain` |
+| Listener | LangGraph (Band SDK) | HQ | `prompts/listener.md` | `uv run --env-file .env python -m agents.sdk.run listener` |
+| Brain | LangGraph (Band SDK) | HQ | `prompts/brain.md` | `uv run --env-file .env python -m agents.sdk.run brain` |
 
 ## Before starting any agent
 
-1. keep-api is running: `uv run python -m keep.api` (default http://127.0.0.1:8787; `KEEP_BACKEND=local` works offline, without LLM keys).
+1. Cognee and keep-api are running: `docker compose up -d neo4j cognee`, then `KEEP_BACKEND=cognee uv run python -m keep.api` (default http://127.0.0.1:8787; `KEEP_BACKEND=local` works offline, without LLM keys).
 2. `bin/keep` is on the agent's PATH, or call it with its full path.
 3. SDK agents: register each at app.band.ai/agents › Connect Agent and save the ID and key in `agent_config.yaml` at the repo root (gitignored):
 

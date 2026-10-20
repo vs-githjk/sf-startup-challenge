@@ -20,9 +20,10 @@ The organizers score repos with [app-security-score](https://github.com/javierga
 | Untrusted text stays inert | Transcripts and LLM output are rendered with `textContent`, never `innerHTML`; never passed to a shell or file path |
 | Input validation | pydantic models with length limits and allowed values at every API edge |
 | Secrets | Read from `.env` (gitignored) and `agent_config.yaml` (gitignored); never logged or posted in Band |
-| Network | keep-api binds to 127.0.0.1 only; Neo4j ports bound to localhost |
+| Network | keep-api binds to 127.0.0.1 only; Neo4j and Cognee ports bound to localhost |
 
 ## Known findings
 
-- `diskcache 5.6.3` (pulled in by `cognee==1.6.5`): GHSA-w8v5-vhqr-4h9v, unsafe pickle deserialization, moderate. **No fixed version exists.** We never pass untrusted data to diskcache, and its cache directory is local to the memory service. We'll upgrade as soon as a fix ships.
+- **Cognee runs isolated as a container** (`cognee/cognee:1.6.5`, pinned tag, bound to 127.0.0.1, authentication and multi-tenancy off because it is a single local instance, local file paths and HTTP fetching disabled). Our repo's dependency tree (`requirements.txt`, 62 packages) no longer contains `cognee` or its heavy transitive packages (pillow, onnxruntime, litellm, diskcache), and no longer contains `langchain-community` (band-sdk is installed without its `langgraph` extra; we pin only `langgraph`, `langchain`, `langchain-core` and `langchain-anthropic`, the packages `agents/sdk/run.py` imports). Scan the image separately with Snyk Container: `snyk container test cognee/cognee:1.6.5`.
+- Known risk in the container: `diskcache` (GHSA-w8v5-vhqr-4h9v, unsafe pickle deserialization, moderate, no fix released) lives inside the Cognee image. We never send untrusted pickles to it; its cache is internal to the container.
 - Final scorer result: _filled in at feature freeze from the real run._

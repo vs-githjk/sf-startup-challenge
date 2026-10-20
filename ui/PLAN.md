@@ -29,6 +29,7 @@ flowchart LR
 | Approval queue | `GET /drafts`, `POST /drafts/{id}/approve` status and hash | Draft text, evidence per claim, pending or approved, sha256 | Band 25 (human decision) |
 | Agent cost and credits | `GET /usage`, `GET /credits`, `GET /gate/{feature}` | Tokens, tasks, dollars per agent, wallet balance, gated features | Flexprice +10, Band 25 (cost view) |
 | Live activity | `GET /events` | Every memory event, cost event and block, newest first | Execution 20 |
+| Memory graph (added) | `GET /memories`, `GET /drafts` | Datasets as hubs, memories as nodes, red links for draft vs contradicting memory; dependency free SVG force layout | Cognee 25, Innovation 10 |
 | Security panel (add) | scan results stored under `eng_security` | Last scan time, findings, blocked tasks, repeat count, repo score | Snyk +10 |
 
 ## 2. Founder flow through the UI
@@ -90,3 +91,22 @@ Every item that comes from memory shows `[memory: dataset / short quote]` so rec
 | `mermaid-expert` | Architecture diagram for the README |
 
 How each helps the four tools is in `scoring/README.md`.
+
+## 7. Not looking AI generated
+
+Common tells reported by practitioners (opinion, not research): default font stacks, purple to blue gradients, soft grey shadows on floating cards, emoji icons, colored left borders on cards, an italic accent word in the headline, numbered 01 02 03 markers on content that is not a sequence, generic template layouts, and sterile generated imagery. Sources: capitalandcompute.net "How to Fix AI Slop in Web Design, Tell by Tell", robotsonpayroll.substack.com "how to avoid that vibe coded look", chromatix.com.au "common mistakes when using ai for web design".
+
+What we do instead:
+
+| Tell | Our choice |
+|---|---|
+| Default fonts | Fraunces for quotes, Hanken Grotesk for headings, JetBrains Mono for data |
+| Gradient and card shadows | Flat ink panels, hairline borders, one brass accent, no shadows |
+| Template layout | Hero is a live ASCII prism, content is a ledger with a memory graph |
+| Decorative icons | None. Status is text chips and the graph |
+| Fake numbers | Every number comes from keep-api; demo mode is labelled |
+| Vague copy | Plain statements about promises, claims and approvals |
+
+ASCII hero (`ascii.js`): a canvas draws a prism that splits one red beam of promises into a spectrum. Brightness picks a character from a ramp. The pointer pushes glyphs away, brightens them and leaves a decaying heat trail. 30 fps cap, paused off screen, one static frame under reduced motion. Technique notes: brightness to character ramp, heat trail, canvas not DOM (21st.dev ASCII wake and dither components, ui-skills ascii-animation).
+
+Reference clone: `clone/` holds third party repos for study. It is gitignored so their manifests never count against the Snyk score. The kalman-space repo URL is still needed.
