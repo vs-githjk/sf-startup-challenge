@@ -15,6 +15,9 @@ METERS = {
     "agent_tasks": ("Agent tasks", {"type": "SUM", "field": "tasks"}),
     "approved_outbound": ("Approved outbound messages", {"type": "COUNT"}),
 }
+PLAN_KEY = "prismkeep_workspace"
+# Credits per unit, matching keep/billing.py (wallet conversion_rate 1: one credit = $1 unit).
+PRICES = {"agent_tokens": "0.001", "approved_outbound": "5"}
 
 
 def _items(data) -> list:
@@ -62,11 +65,60 @@ def ensure_wallet(c: httpx.Client, customer_id: str, credits: int) -> dict:
     return r.json()
 
 
+def ensure_plan(c: httpx.Client) -> str:
+    r = c.post("/plans/search", json={"lookup_key": PLAN_KEY})
+    r.raise_for_status()
+    hits = [p for p in _items(r.json()) if p.get("lookup_key") == PLAN_KEY]
+    if hits:
+        plan_id = hits[0]["id"]
+    else:
+        r = c.post("/plans", json={"name": "PrismKeep Workspace", "lookup_key": PLAN_KEY,
+                                   "description": "$99/mo with 1,000 credits; usage draws down credits"})
+        r.raise_for_status()
+        plan_id = r.json()["id"]
+    ensure_prices(c, plan_id)
+    return plan_id
+
+
+def ensure_prices(c: httpx.Client, plan_id: str) -> None:
+    r = c.post("/prices/search", json={"entity_type": "PLAN", "entity_ids": [plan_id]})
+    r.raise_for_status()
+    priced = {p.get("meter_id") for p in _items(r.json()) if p.get("entity_id") == plan_id}
+    r = c.get("/features", params={"limit": 100})
+    r.raise_for_status()
+    meter_ids = {f.get("lookup_key"): f.get("meter_id") for f in _items(r.json())}
+    for key, amount in PRICES.items():
+        if meter_ids[key] in priced:
+            continue
+        r = c.post("/prices", json={
+            "entity_type": "PLAN", "entity_id": plan_id, "type": "USAGE",
+            "billing_model": "FLAT_FEE", "amount": amount, "meter_id": meter_ids[key],
+            "currency": "usd", "price_unit_type": "FIAT", "billing_period": "MONTHLY",
+            "billing_period_count": 1, "invoice_cadence": "ARREAR",
+            "display_name": METERS[key][0]})
+        r.raise_for_status()
+
+
+def ensure_subscription(c: httpx.Client, customer_id: str, plan_id: str) -> str:
+    r = c.post("/subscriptions/search", json={"customer_id": customer_id})
+    r.raise_for_status()
+    hits = [s for s in _items(r.json()) if s.get("plan_id") == plan_id]
+    if hits:
+        return hits[0]["id"]
+    r = c.post("/subscriptions", json={"customer_id": customer_id, "plan_id": plan_id,
+                                       "currency": "usd", "billing_period": "MONTHLY"})
+    r.raise_for_status()
+    return r.json()["id"]
+
+
 def setup(c: httpx.Client, customer: str, credits: int) -> dict:
     cust = ensure_customer(c, customer)
     features = ensure_features(c)
     wallet = ensure_wallet(c, cust["id"], credits)
-    return {"customer_id": cust["id"], "features": features, "wallet_id": wallet["id"]}
+    plan_id = ensure_plan(c)
+    sub_id = ensure_subscription(c, cust["id"], plan_id)
+    return {"customer_id": cust["id"], "features": features, "wallet_id": wallet["id"],
+            "plan_id": plan_id, "subscription_id": sub_id}
 
 
 def main() -> int:
