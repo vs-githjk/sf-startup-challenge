@@ -60,3 +60,6 @@ clone/*
 .brain.log
 .listener-debug.log
 .keep-api.log
+
+# Prism MCP config with a personal access token (local only)
+agents/*/.mcp.json
