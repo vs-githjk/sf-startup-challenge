@@ -106,6 +106,17 @@ Every tool today covers one side of a founder's world. None checks an outbound m
 | Flexprice | No usage-based pricing, no credit gate on expensive actions, no pass-through of agent cost. |
 | Snyk | No security gate on fixes, no repeat-finding memory, no score on our own repo. |
 
+## Sponsors and how we used them
+
+| Sponsor | What we used | How it's essential |
+|---|---|---|
+| **Band** (Band Desktop + `band-sdk`) | Two rooms (Hq, Eng); six agents built with Claude Code, Codex and LangGraph; the shared work board; @mention handoffs; `band ask` founder approvals; per-agent and per-room cost in Analytics | Band is how the team works: plan on the board, hand off by @mention, and stop for the founder before anything is sent. Without it, the agents can't coordinate. |
+| **Cognee** (OSS 1.6.5 + Neo4j) | `remember` while agents work, `recall` before they act, `forget` + `improve` on founder corrections; datasets per relationship (`rel_acme`, `rel_northline`), `company` and `eng_security` | Cognee is the product: memory that survives an agent restart and is shared across agents, so a customer call can block an investor claim. |
+| **Snyk** (CLI, Snyk Code, dashboard, Snyk Container) | A Security Reviewer agent that blocks a fix until Snyk is clean; repo monitoring and Snyk's own fix PR; the Cognee image scanned separately | Our repo scores 9.8/10 on the organizers' scorer, and security is a member of the team, not a step at the end. |
+| **Flexprice** | Meters `agent_tokens`, `agent_tasks` and `approved_outbound`; a 1,000-credit prepaid wallet; a gate that reads the live balance before expensive actions | Usage-based pricing from day one: customers pay for the work their agents do. |
+| **AdaL** | Video generation for our demo video, and audits of our codebase | Helped us ship a clear demo and catch issues before judging. |
+| **Prism** (our meeting product) | Read-only MCP (`list_recent_meetings`, `get_meeting`); meetings recorded by Prism's Recall.ai bot | Real meeting capture: the Chief of Staff pulls the transcript straight into the agent team. |
+
 ## Sponsor integrations
 
 - **Band Desktop.** Two rooms (Hq, Eng); six agents built with three tools (Claude Code, Codex, LangGraph via `band-sdk`); a shared work board (To-do → Done); @mention handoffs; founder approvals through `band ask` and permission prompts; per-agent and per-room cost in Analytics.
