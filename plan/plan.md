@@ -4,7 +4,7 @@ Mode: hackathon
 Brief: plan/ideas.md (critique, variants, pick)
 PRD: plan/PRD.md
 Base branch: main
-Build branch: build/<lane> (lane-a-band, lane-b-memory, lane-c-trust), merged into main only at integration checkpoints by Person A
+Build branch: build/<lane> (lane-a-band, lane-b-memory, lane-c-agents, lane-d-trust; team of 4, see hour-plan.md), merged into main only at integration checkpoints by Person A
 Test command: `uv run pytest -q` (memory and agents); `uv run python scripts/smoke.py` (end to end against seeded data)
 Run command: `docker compose up -d neo4j`, `uv run python -m keep.api` (owns Cognee in-process), `uv run python -m agents.run_sdk_agents`, plus Band Desktop with the owned Claude Code and Codex agents
 Progress: plan/progress.md
@@ -85,7 +85,7 @@ Scorer: github.com/javiergarza-snyk/app-security-score (v1.5.0, sponsor-run, 2 s
 5. Band agent offline. Expected: CoS notices no claim within 60 s and posts which agent is down.
 
 ## Tasks
-Demo path first. Lanes: A = Band spine and agents (Vidyut), B = memory and data, C = trust, billing and video.
+Demo path first. Lanes (team of 4): A = Band spine and agents (Vidyut), B = memory, C = intelligence agents and seed data, D = trust and billing. Task owner letters below are from the 3-person draft; hour-plan.md is the source of truth for who owns what.
 
 ### T1: Repo, pins and baseline scan (C, 30 min)
 depends_on: []

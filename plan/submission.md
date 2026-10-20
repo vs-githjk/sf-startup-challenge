@@ -1,6 +1,6 @@
 # Submission: SF Startup Challenge, Oct 20, 2026
 
-D = 16:00 PDT (ASSUMED, not confirmed; replace with the organizers' stated deadline). Video: 2 to 3 minutes (challenge.md). Unlisted OK: unknown. Judging format: unknown (assume video plus live demo).
+D = 15:30 PDT (confirmed by Vidyut). Target submitted 15:00. Video: 2 to 3 minutes (challenge.md). Unlisted OK: unknown. Judging format: unknown (assume video plus live demo).
 Source: `plan/challenge.md` (organizer brief as captured by Vidyut). Rows below are from that brief; anything else is provisional until confirmed with organizers.
 
 ## Criteria and weights
@@ -22,5 +22,5 @@ Band 25, Cognee 25, startup viability 20, technical execution and demo 20, innov
 - [ ] Repo public, README with problem, agent roster (roles, harnesses, handoffs), Cognee use, Flexprice use, Snyk use, security score, synthetic-data disclosure, mocked items (outbox, metrics)
 - [ ] Demo video 2 to 3 min uploaded, plays in incognito
 - [ ] Project description fields filled
-- [ ] All three teammates listed
+- [ ] All four teammates listed
 - [ ] Optional pitch deck (skip unless ahead at 15:15)
