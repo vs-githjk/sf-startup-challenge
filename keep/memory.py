@@ -73,8 +73,8 @@ class CogneeBackend:
             r = await c.post("/api/v1/remember", files=[(k, (None, v)) for k, v in form])
             r.raise_for_status()
             # The run's item list holds other items of the dataset too; find ours by the name
-            # Cognee gives a text item: "text_<md5 of the utf-8 text>.txt".
-            name = "text_" + hashlib.md5(text.encode("utf-8")).hexdigest() + ".txt"
+            # Cognee 1.6.5 names a text item "text_<md5 of the utf-8 text>" (older builds added ".txt").
+            name = "text_" + hashlib.md5(text.encode("utf-8")).hexdigest()
             r = await c.get("/api/v1/datasets")
             r.raise_for_status()
             for ds in r.json():
@@ -82,7 +82,7 @@ class CogneeBackend:
                     d = await c.get(f"/api/v1/datasets/{ds['id']}/data", params={"limit": 1000})
                     d.raise_for_status()
                     for row in d.json():
-                        if row.get("name") == name:
+                        if row.get("name") in (name, name + ".txt"):
                             return str(row["id"])
         raise LookupError("remembered text not found in its Cognee dataset")
 
