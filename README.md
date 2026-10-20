@@ -14,7 +14,9 @@ Built at the SF Startup Challenge (AWS Builder Loft, Oct 20, 2026) with **Band D
 <img alt="tests" src="https://img.shields.io/badge/tests-29%20passing-15803d?style=flat-square">
 </p>
 
-**▶ Demo video:** _YouTube link goes here_
+**▶ Demo video (2:31):** https://youtu.be/kmybZ8YgXFY
+
+[![PrismKeep demo video](https://img.youtube.com/vi/kmybZ8YgXFY/maxresdefault.jpg)](https://youtu.be/kmybZ8YgXFY)
 
 <p align="center"><img src="docs/img/band-hq-agents.jpg" width="900" alt="Six PrismKeep agents online in the Band Hq room"></p>
 
