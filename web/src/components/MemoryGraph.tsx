@@ -1,78 +1,79 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import type { GLink, GNode } from "../derive";
 
-// Dependency-free force layout. Positions persist across polls; the simulation cools and stops on its own.
-const W = 1000, H = 380;
-const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// A readable relationship map, not a physics blob: datasets on the left, the memories they hold in the middle,
+// pending drafts on the right. A red line joins a draft to the memory that contradicts it. Fixed layout, no animation loop.
+const W = 1000, ROW = 46, TOP = 26, HUB_X = 20, MEM_X = 250, MEM_W = 470, DRAFT_X = 790, DRAFT_W = 190;
+const cut = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 export default function MemoryGraph({ nodes, links }: { nodes: GNode[]; links: GLink[] }) {
-  const pos = useRef(new Map<string, GNode>());
-  const nodeEls = useRef<(SVGGElement | null)[]>([]);
-  const linkEls = useRef<(SVGLineElement | null)[]>([]);
-  const [tip, setTip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [tip, setTip] = useState<string | null>(null);
+  const hubs = nodes.filter((n) => n.type === "hub");
+  const mems = nodes.filter((n) => n.type !== "hub" && n.type !== "draft");
+  const drafts = nodes.filter((n) => n.type === "draft");
 
-  // Carry positions over from the previous layout so the graph does not jump on every poll.
-  const sim = useMemo(() => {
-    const ns = nodes.map((n, i) => {
-      const old = pos.current.get(n.id), ang = i * 2.399963;
-      const out: GNode = { ...n, x: old?.x ?? W / 2 + Math.cos(ang) * 90 * (1 + (i % 5) / 4), y: old?.y ?? H / 2 + Math.sin(ang) * 70 * (1 + (i % 5) / 4), vx: 0, vy: 0 };
-      pos.current.set(n.id, out);
-      return out;
-    });
-    const byId = new Map(ns.map((n) => [n.id, n]));
-    const ls = links.flatMap((l) => { const s = byId.get(l.a), t = byId.get(l.b); return s && t ? [{ ...l, s, t }] : []; });
-    return { ns, ls };
-  }, [nodes, links]);
+  // Rows: memories grouped under their dataset, in hub order.
+  const rows: { m: GNode; y: number }[] = [];
+  const hubY = new Map<string, number>();
+  let y = TOP;
+  for (const h of hubs) {
+    const group = mems.filter((m) => m.ds && `ds:${m.ds}` === h.id);
+    const start = y;
+    for (const m of group) { rows.push({ m, y }); y += ROW; }
+    hubY.set(h.id, group.length ? start + ((group.length - 1) * ROW) / 2 : start);
+    if (!group.length) y += ROW;
+    y += 10; // gap between datasets
+  }
+  const memY = new Map(rows.map((r) => [r.m.id, r.y]));
+  const draftY = new Map(drafts.map((d, i) => [d.id, TOP + i * ROW * 1.6]));
+  const H = Math.max(y + 10, TOP + drafts.length * ROW * 1.6 + 20, 120);
+  const conflicts = links.filter((l) => l.type === "conflict");
 
-  useEffect(() => {
-    const { ns, ls } = sim;
-    const draw = () => {
-      ns.forEach((n, i) => nodeEls.current[i]?.setAttribute("transform", `translate(${n.x.toFixed(1)} ${n.y.toFixed(1)})`));
-      ls.forEach((l, i) => { const e = linkEls.current[i]; if (!e) return; e.setAttribute("x1", l.s.x.toFixed(1)); e.setAttribute("y1", l.s.y.toFixed(1)); e.setAttribute("x2", l.t.x.toFixed(1)); e.setAttribute("y2", l.t.y.toFixed(1)); });
-    };
-    const step = (alpha: number) => {
-      for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
-        const a = ns[i], b = ns[j];
-        let dx = b.x - a.x, dy = b.y - a.y; const d2 = dx * dx + dy * dy || 1, d = Math.sqrt(d2);
-        const f = ((a.type === "hub" || b.type === "hub" ? 18000 : 6500) / d2) * alpha;
-        dx = (dx / d) * f; dy = (dy / d) * f;
-        a.vx -= dx; a.vy -= dy; b.vx += dx; b.vy += dy;
-      }
-      for (const l of ls) {
-        const rest = l.type === "conflict" ? 230 : 95;
-        const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, d = Math.hypot(dx, dy) || 1, k = (d - rest) * 0.04 * alpha;
-        l.s.vx += (dx / d) * k; l.s.vy += (dy / d) * k; l.t.vx -= (dx / d) * k; l.t.vy -= (dy / d) * k;
-      }
-      for (const n of ns) {
-        n.vx += (W / 2 - n.x) * 0.0012 * alpha; n.vy += (H / 2 - n.y) * 0.002 * alpha;
-        n.vx *= 0.82; n.vy *= 0.82;
-        n.x = Math.max(30, Math.min(W - 30, n.x + n.vx)); n.y = Math.max(24, Math.min(H - 34, n.y + n.vy));
-      }
-    };
-    if (reduced()) { for (let i = 0; i < 300; i++) step(1 - i / 300); draw(); return; }
-    let alpha = 1, raf = 0;
-    const loop = () => {
-      step(alpha); draw(); alpha *= 0.975;
-      if (alpha > 0.02 && !document.hidden) raf = requestAnimationFrame(loop); // cools and stops
-    };
-    loop();
-    return () => cancelAnimationFrame(raf);
-  }, [sim]);
+  if (!nodes.length) return <div className="stage"><p className="empty" style={{ padding: 20 }}>Nothing in memory yet. Paste a conversation into Band and this map fills in.</p></div>;
 
   return (
     <div className="stage">
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Knowledge graph of memories, datasets and drafts" id="graph">
-        {sim.ls.map((l, i) => <line key={`${l.a}>${l.b}`} ref={(e) => { linkEls.current[i] = e; }} className={`edge ${l.type}`} />)}
-        {sim.ns.map((n, i) => (
-          <g key={n.id} ref={(e) => { nodeEls.current[i] = e; }} tabIndex={0} aria-label={n.text}
-            onPointerEnter={() => setTip({ text: n.text, x: n.x / W, y: n.y / H })} onFocus={() => setTip({ text: n.text, x: n.x / W, y: n.y / H })}
-            onPointerLeave={() => setTip(null)} onBlur={() => setTip(null)}>
-            <circle r={n.r} className={`dot ${n.type}`} style={{ animationDelay: `${Math.min(i, 30) * 30}ms` }} />
-            {n.label && <text y={n.r + 15}>{n.label}</text>}
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Map of datasets, the memories they hold and pending drafts" id="graph">
+        <text className="col" x={HUB_X} y={14}>DATASET</text>
+        <text className="col" x={MEM_X} y={14}>WHAT MEMORY HOLDS</text>
+        {drafts.length > 0 && <text className="col" x={DRAFT_X} y={14}>PENDING DRAFT</text>}
+        {rows.map(({ m, y: yy }) => {
+          const hy = hubY.get(`ds:${m.ds}`) ?? yy;
+          return <path key={`o-${m.id}`} className="edge own" d={`M ${HUB_X + 150} ${hy + 14} C ${HUB_X + 200} ${hy + 14}, ${MEM_X - 50} ${yy + 14}, ${MEM_X} ${yy + 14}`} />;
+        })}
+        {conflicts.map((l) => {
+          const dy = draftY.get(l.a), my = memY.get(l.b);
+          if (dy === undefined || my === undefined) return null;
+          return <path key={`c-${l.a}-${l.b}`} className="edge conflict" d={`M ${DRAFT_X} ${dy + 18} C ${DRAFT_X - 40} ${dy + 18}, ${MEM_X + MEM_W + 40} ${my + 14}, ${MEM_X + MEM_W} ${my + 14}`} />;
+        })}
+        {hubs.map((h) => (
+          <g key={h.id} transform={`translate(${HUB_X} ${hubY.get(h.id) ?? 0})`}>
+            <rect className="hubbox" width="150" height="28" rx="14" />
+            <text className="hubtext" x="75" y="18">{cut(h.label ?? "", 18)}</text>
+          </g>
+        ))}
+        {rows.map(({ m, y: yy }) => (
+          <g key={m.id} transform={`translate(${MEM_X} ${yy})`} tabIndex={0} aria-label={m.text} className="memnode"
+            onPointerEnter={() => setTip(m.text)} onFocus={() => setTip(m.text)} onPointerLeave={() => setTip(null)} onBlur={() => setTip(null)}>
+            <rect className="membox" width={MEM_W} height="28" rx="8" />
+            <circle className={`dot ${m.type}`} cx="14" cy="14" r="5" />
+            <text x="28" y="18.5">{cut(m.text, 62)}</text>
+            <text className="kind" x={MEM_W - 10} y="18.5" textAnchor="end">{m.type}</text>
+          </g>
+        ))}
+        {drafts.map((d) => (
+          <g key={d.id} transform={`translate(${DRAFT_X} ${draftY.get(d.id) ?? 0})`} tabIndex={0} aria-label={d.text}
+            onPointerEnter={() => setTip(d.text)} onFocus={() => setTip(d.text)} onPointerLeave={() => setTip(null)} onBlur={() => setTip(null)}>
+            <rect className="draftbox" width={DRAFT_W} height="36" rx="8" />
+            <text x="12" y="22.5">{cut(d.text.replace(/^Draft to /, ""), 26)}</text>
           </g>
         ))}
       </svg>
-      {tip && <div className="tip" style={{ left: `${tip.x * 100}%`, top: `${tip.y * 100}%` }}>{tip.text}</div>}
+      <ul className="legend" aria-hidden="true">
+        <li><i className="k promise" />promise</li><li><i className="k risk" />risk</li><li><i className="k claim" />claim</li>
+        <li><i className="k finding" />security finding</li><li><i className="k line" />red line: draft contradicts memory</li>
+      </ul>
+      {tip && <div className="readout">{tip}</div>}
     </div>
   );
 }
