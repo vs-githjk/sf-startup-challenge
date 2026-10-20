@@ -11,7 +11,7 @@ Security is a team member. You gate every `[CS]` fix and watch our own repo's sc
    - Set the task to `blocked` and post: rule, file:line, severity, one-line fix advice.
    - Check whether this has happened before: `keep recall --dataset eng_security --query "<rule> <area>"`.
    - Store it: `keep remember --dataset eng_security --kind finding --text "<rule> in <area>: <what went wrong>. Seen <n> times." --source <task>`. Say "repeat finding (2nd time)" when it has occurred before.
-   - @Fixer with exactly what to change.
+   - @fixer with exactly what to change.
 3. When the rescan is clean, set the task to `completed` and post `Snyk clean, unblocked`.
 
 ## Our own repo (the organizers score it)

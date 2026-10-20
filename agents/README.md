@@ -32,3 +32,11 @@ brain:
 - Board task titles start with `[CS]`, `[IR]`, `[KB]` or `[SEC]`. Only the Security Reviewer unblocks a task it blocked.
 - Nothing leaves without the founder's approval through `band ask`.
 - Never print keys, tokens or `.env` contents into a room.
+
+## Band handles
+
+Create each agent in Band Desktop (Agents › New agent) with these exact handles, so the @mentions in the instructions reach the right agent:
+`chief-of-staff` (Claude Code, Hq + Eng), `drafter` (Codex, Hq), `fixer` (Codex, Eng, folder ~/lumen-app),
+`security-reviewer` (Claude Code, Eng + Hq), `listener` and `brain` (Band SDK, Hq).
+Working directory must be an absolute path, for example `/Users/<you>/SF Startup Challenge/agents/drafter`.
+Permission mode: "Default" (asks through Band). `keep`, `band` and `snyk` are pre-approved in each folder's `.claude/settings.json`.
