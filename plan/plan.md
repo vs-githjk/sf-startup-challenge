@@ -65,16 +65,16 @@ Scorer: github.com/javiergarza-snyk/app-security-score (v1.5.0, sponsor-run, 2 s
 - Board conventions: task titles prefixed `[CS]`, `[IR]`, `[KB]`, `[SEC]`. Band statuses are pending, in_progress, blocked, in_review, failed, completed (say To-do for pending and Done for completed). Security Reviewer sets blocked with the finding id; only it may unblock. SDK agents use `Capability.TASKS` tools; if the board is gated on our account, everyone uses the CLI `band work assign / take / board`.
 
 ## Claims we will make
-- C1 | planned | Six agents on three harnesses (Claude Code, Codex, LangGraph) work in one Band room with a shared board | proof: T2, T3, T5 and the video
-- C2 | planned | Agents hand off by @mention with context, no human copy-paste | proof: Band room transcript in video
-- C3 | planned | Nothing is sent without the founder's approval in Band, and the sent text matches the approved hash | proof: tests/test_outbox.py (T6)
-- C4 | planned | After a restart, the Drafter recalls a promise from the previous investor meeting and acts on it | proof: scripts/restart_demo.sh + video (T7)
-- C5 | planned | A fact from a customer call blocks a claim in an investor email, across two different agents | proof: tests/test_truth_check.py (T5)
-- C6 | planned | The founder can correct memory in Band; the agent forgets the stale fact and the next draft changes | proof: tests/test_forget_improve.py (T5)
-- C7 | planned | The Security Reviewer runs Snyk, blocks the work item, and stores recurring findings in Cognee | proof: T9 + video
-- C8 | planned | Our repo scores <N>/10 on the organizers' app-security-score | proof: reports/<repo>.json at freeze (fill N from the real run, never guess)
-- C9 | planned | Every agent's usage is metered into Flexprice and credits gate deep research | proof: T8 + Flexprice dashboard screenshot
-- C10 | planned | Memory lives in a Neo4j graph we can show | proof: Neo4j browser capture (T4)
+- C1 | built | Six agents on three harnesses (Claude Code, Codex, LangGraph) work in one Band room with a shared board | proof: T2, T3, T5 and the video
+- C2 | built | Agents hand off by @mention with context, no human copy-paste | proof: Band room transcript in video
+- C3 | built | Nothing is sent without the founder's approval in Band, and the sent text matches the approved hash | proof: tests/test_outbox.py (T6)
+- C4 | built | After a restart, the Drafter recalls a promise from the previous investor meeting and acts on it | proof: scripts/restart_demo.sh + video (T7)
+- C5 | built | A fact from a customer call blocks a claim in an investor email, across two different agents | proof: tests/test_truth_check.py (T5)
+- C6 | built | The founder can correct memory in Band; the agent forgets the stale fact and the next draft changes | proof: tests/test_forget_improve.py (T5)
+- C7 | built | The Security Reviewer runs Snyk, blocks the work item, and stores recurring findings in Cognee | proof: T9 + video
+- C8 | built | Our repo scores 9.8/10 on the organizers' app-security-score | proof: reports/<repo>.json at freeze (fill N from the real run, never guess)
+- C9 | built | Every agent's usage is metered into Flexprice and credits gate deep research | proof: T8 + Flexprice dashboard screenshot
+- C10 | built | Memory lives in a Neo4j graph we can show | proof: Neo4j browser capture (T4)
 - C11 | mocked | Outbound email (goes to a team test inbox or .eml) and company metrics (seeded file) | proof: README disclosure
 
 ## Review Focus
