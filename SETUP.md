@@ -16,7 +16,7 @@ Prerequisites: `git`, Node ≥ 20, [`uv`](https://docs.astral.sh/uv/), Docker De
 
 1. Download Band Desktop from **downloads.band.ai** (or band.ai/download) and sign in at app.band.ai.
 2. In the app, use **Install CLI** so `band` / `jam` are on your PATH.
-   - Fallback if the app is not working: `curl -fsSL https://github.com/thenvoi/homebrew-tap/releases/latest/download/jam-installer.sh | sh`
+   - Fallback if the app is not working: download the release tarball from github.com/thenvoi/homebrew-tap/releases, check its sha256 against `Formula/jam.rb`, then copy `band` and `jamd` into `~/.local/bin` (that is how Vidyut's machine was set up). Do not pipe the installer script into `sh` without reading it first.
    - `brew install thenvoi/tap/jam` fails if your Xcode is out of date. Use the fallback above instead.
 3. `band init` (browser sign-in), then `band preflight`. Every row should be green.
 4. Claude Code integration: `jam plugin install`, then restart your Claude Code sessions.

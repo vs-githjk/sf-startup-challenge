@@ -17,7 +17,7 @@ if command -v band >/dev/null || command -v jam >/dev/null; then
   ok "band CLI present"
 else
   warn "band CLI missing. Preferred: install Band Desktop (downloads.band.ai) and use its 'Install CLI' action."
-  warn "Fallback: curl -fsSL https://github.com/thenvoi/homebrew-tap/releases/latest/download/jam-installer.sh | sh"
+  warn "Fallback: verified tarball from github.com/thenvoi/homebrew-tap/releases (see SETUP.md)"
 fi
 
 echo "== Snyk CLI"
