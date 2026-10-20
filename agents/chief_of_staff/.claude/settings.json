@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(keep:*)",
+      "Bash(keep *)",
+      "Bash(band:*)",
+      "Bash(band *)",
+      "Bash(jam:*)",
+      "Bash(jam *)"
+    ]
+  }
+}

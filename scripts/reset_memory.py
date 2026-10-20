@@ -1,9 +1,10 @@
-"""Wipe all memory before a clean run: Cognee (Neo4j graph, LanceDB vectors, metadata) and the
-keep ledger (.keep/: memories, events, drafts, usage). Stop keep-api first.
+"""Wipe all memory before a clean run: everything in the Cognee container (graph, vectors,
+metadata, via its REST API) and the keep ledger (.keep/: memories, events, drafts, usage).
+Stop keep-api first so it does not write while we wipe.
 
+    docker compose up -d neo4j cognee
     uv run python scripts/reset_memory.py
 """
-import asyncio
 import os
 import sys
 from pathlib import Path
@@ -14,20 +15,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from keep.store import data_dir  # noqa: E402
 
 
-async def main() -> None:
+def main() -> None:
     url = os.environ.get("KEEP_URL", "http://127.0.0.1:8787")
     try:
         httpx.get(f"{url}/health", timeout=2)
-        sys.exit(f"keep-api is running at {url}; stop it first (only one process may touch Cognee)")
+        sys.exit(f"keep-api is running at {url}; stop it first")
     except httpx.HTTPError:
         pass
-    import cognee
-    await cognee.prune.prune_data()
-    await cognee.prune.prune_system(metadata=True)
+    cognee = os.environ.get("COGNEE_URL", "http://127.0.0.1:8000").rstrip("/")
+    r = httpx.post(f"{cognee}/api/v1/forget", json={"everything": True}, timeout=300.0)
+    r.raise_for_status()
     db = data_dir() / "keep.db"
     db.unlink(missing_ok=True)
-    print(f"reset: Cognee stores pruned, ledger {db} removed")
+    print(f"reset: Cognee at {cognee} emptied, ledger {db} removed")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

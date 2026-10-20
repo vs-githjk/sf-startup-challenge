@@ -7,14 +7,14 @@ Everyone on the team runs through this once. Ask in the team chat if a step fail
 ```sh
 git clone https://github.com/vs-githjk/sf-startup-challenge.git
 cd sf-startup-challenge
-scripts/setup.sh          # checks tools, installs Snyk CLI, uv sync (Cognee), creates .env
+scripts/setup.sh          # checks tools, installs Snyk CLI, uv sync, creates .env
 ```
 
 Prerequisites: `git`, Node ≥ 20, [`uv`](https://docs.astral.sh/uv/), Docker Desktop (running).
 
 ## 2. Band Desktop (mandatory sponsor)
 
-1. Download Band Desktop from **downloads.band.ai** (or band.ai/download) and sign in at app.band.ai.
+1. Download Band Desktop: Mac Apple Silicon https://downloads.band.ai/desktop/latest/macos/jam-aarch64.dmg (Intel: .../macos/jam-x86_64.dmg). The bare downloads.band.ai address shows "Access Denied". Sign in with your app.band.ai account.
 2. In the app, use **Install CLI** so `band` / `jam` are on your PATH.
    - Fallback if the app is not working: download the release tarball from github.com/thenvoi/homebrew-tap/releases, check its sha256 against `Formula/jam.rb`, then copy `band` and `jamd` into `~/.local/bin` (that is how Vidyut's machine was set up). Do not pipe the installer script into `sh` without reading it first.
    - `brew install thenvoi/tap/jam` fails if your Xcode is out of date. Use the fallback above instead.
@@ -28,13 +28,15 @@ Docs: docs.band.ai/jam
 
 ## 3. Cognee (mandatory sponsor, AI memory)
 
-`scripts/setup.sh` installs Cognee 1.6.5 into `.venv`. Fill `LLM_API_KEY` in `.env`, then run:
+Cognee does not run inside our Python environment. It runs as the pinned container `cognee/cognee:1.6.5` (REST API on 127.0.0.1:8000) next to Neo4j, so its dependency tree stays out of this repo's Snyk scan. Set `NEO4J_PASSWORD` and `LLM_API_KEY` in `.env`, then:
 
 ```sh
-uv run python -c "import cognee; print('ok')"
+docker compose up -d neo4j cognee
+curl -s http://127.0.0.1:8000/health
+KEEP_BACKEND=cognee uv run python -m keep.api
 ```
 
-By default all storage is local (SQLite + LanceDB + Kuzu), so you don't need a server. Neo4j is optional extra credit; its settings are in `.env.example`.
+`KEEP_BACKEND=local` skips Cognee entirely (keyword recall, no LLM key). `COGNEE_URL` overrides the Cognee address. `uv run python scripts/reset_memory.py` empties Cognee and the ledger.
 
 Docs: docs.cognee.ai · github.com/topoteretes/cognee
 
@@ -53,3 +55,5 @@ Sign up at docs.flexprice.io (cloud). Create an API key and put it in `.env` as 
 ## Plan
 
 The idea, PRD, hour-by-hour split and demo script are in [`plan/`](plan/).
+
+`requirements.txt` is generated for Snyk (it reads that file, not `uv.lock`). Regenerate it whenever dependencies change: `uv export --format requirements-txt --no-hashes --no-dev --no-emit-project > requirements.txt`
