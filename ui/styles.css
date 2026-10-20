@@ -1,0 +1,25 @@
+/* Starter tokens; the UI/UX role owns the real design. */
+:root {
+  --bg: #f5f6f8; --surface: #fff; --fg: #16181d; --muted: #5b6170; --line: #d9dce3; --accent: #3a4fd8;
+  --ok: #2f9a5f; --warn: #b7791f; --bad: #c2412d;
+  --font: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #111318; --surface: #181b22; --fg: #e8eaef; --muted: #9aa1b2; --line: #2b303b; --accent: #8b9bff; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font); }
+.bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; font-size: 18px; }
+.credits { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+h2 { margin: 0 0 4px; font-size: 16px; }
+.hint { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.list li { border-top: 1px solid var(--line); padding-top: 6px; overflow-wrap: anywhere; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid currentColor; margin-right: 6px; }
+.pill.promise { color: var(--accent); } .pill.risk { color: var(--bad); } .pill.claim { color: var(--warn); }
+.pill.approved, .pill.sent { color: var(--ok); }

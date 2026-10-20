@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PrismKeep</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- STARTER for the UI/UX role. No build step and no npm on purpose (keeps the Snyk score clean).
+       Served by keep-api at http://127.0.0.1:8787/ . Data comes from keep-api JSON endpoints. -->
+  <header class="bar">
+    <div class="brand">PrismKeep</div>
+    <div class="credits" id="credits">credits …</div>
+  </header>
+  <main class="grid">
+    <section class="card" aria-labelledby="h-promises">
+      <h2 id="h-promises">Promise ledger</h2>
+      <p class="hint">Every promise made to investors and customers, from Cognee memory.</p>
+      <ul id="promises" class="list"></ul>
+    </section>
+    <section class="card" aria-labelledby="h-risks">
+      <h2 id="h-risks">Risks and claims</h2>
+      <p class="hint">What could contradict an outbound message.</p>
+      <ul id="risks" class="list"></ul>
+    </section>
+    <section class="card" aria-labelledby="h-drafts">
+      <h2 id="h-drafts">Approval queue</h2>
+      <p class="hint">Drafts waiting for the founder. Approve in Band; this view shows status and hash.</p>
+      <ul id="drafts" class="list"></ul>
+    </section>
+    <section class="card" aria-labelledby="h-usage">
+      <h2 id="h-usage">Agent cost</h2>
+      <p class="hint">Tokens, tasks and dollars per agent, metered to Flexprice.</p>
+      <ul id="usage" class="list"></ul>
+    </section>
+    <section class="card wide" aria-labelledby="h-events">
+      <h2 id="h-events">Live activity</h2>
+      <ol id="events" class="list mono"></ol>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

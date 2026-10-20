@@ -1,0 +1,13 @@
+{
+  "_note": "Synthetic metrics for the demo. Not real data.",
+  "as_of": "2026-10-19",
+  "company": "Lumen Analytics",
+  "arr_usd": 1840000,
+  "customers": 23,
+  "net_revenue_retention_top10_pct": 112,
+  "gross_logo_churn_last_quarter": 0,
+  "accounts": {
+    "acme_logistics": {"contract_usd": 120000, "renewal_date": "2026-11-01", "regions_live": 1, "regions_planned": 5, "usage_change_30d_pct": -40},
+    "harbor_freight_tech": {"contract_usd": 64000, "renewal_date": "2027-03-15", "usage_change_30d_pct": 12}
+  }
+}

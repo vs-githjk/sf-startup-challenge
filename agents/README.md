@@ -1,0 +1,34 @@
+# The agent team
+
+Six agents built with three tools, in two Band rooms. Every agent reads and writes memory only through `bin/keep` (the keep-api service owns Cognee). See `plan/plan.md` › Interfaces.
+
+| Agent | Built with | Room | Instructions | How to start it |
+|---|---|---|---|---|
+| Chief of Staff | Claude Code (attached) | HQ, Eng | `chief_of_staff/CLAUDE.md` | Open Claude Code in `agents/chief_of_staff/`, then `/jam as architect` |
+| Drafter | Codex | HQ | `drafter/AGENTS.md` | Band Desktop › New agent › Codex, working dir `agents/drafter/` |
+| Fixer | Codex | Eng | `fixer/AGENTS.md` | Band Desktop › New agent › Codex, working dir is the `lumen-app` checkout |
+| Security Reviewer | Claude Code + Snyk | Eng, HQ | `security_reviewer/CLAUDE.md` | Claude Code in `agents/security_reviewer/`, then `/jam as security-reviewer` |
+| Listener | LangGraph (Band SDK) | HQ | `prompts/listener.md` | `uv run python -m agents.sdk.run listener` |
+| Brain | LangGraph (Band SDK) | HQ | `prompts/brain.md` | `uv run python -m agents.sdk.run brain` |
+
+## Before starting any agent
+
+1. keep-api is running: `uv run python -m keep.api` (default http://127.0.0.1:8787; `KEEP_BACKEND=local` works offline, without LLM keys).
+2. `bin/keep` is on the agent's PATH, or call it with its full path.
+3. SDK agents: register each at app.band.ai/agents › Connect Agent and save the ID and key in `agent_config.yaml` at the repo root (gitignored):
+
+```yaml
+listener:
+  agent_id: "..."
+  api_key: "..."
+brain:
+  agent_id: "..."
+  api_key: "..."
+```
+
+## House rules for every agent
+
+- Cite memory in every message that uses it: `[memory: <dataset> / <short quote>]`.
+- Board task titles start with `[CS]`, `[IR]`, `[KB]` or `[SEC]`. Only the Security Reviewer unblocks a task it blocked.
+- Nothing leaves without the founder's approval through `band ask`.
+- Never print keys, tokens or `.env` contents into a room.
