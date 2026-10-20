@@ -89,7 +89,7 @@ export function SnykCard({ s, st }: { s: Snapshot; st: Stats }) {
   return (
     <Card id="snyk" tone={TOOL_COLORS.snyk} name="Snyk" role="Security as a team member. The reviewer scans each fix, blocks the task and remembers repeat findings." breaks="nothing blocks a risky fix and the team repeats the same mistakes.">
       <Row k="Findings in memory" v={st.findings} />
-      <Row k="Repo score" v="run scripts/security-score.sh" />
+      <Row k="Repo score" v="9.8 of 10, organizers' scorer" />
       <MemoryRows mems={finds.slice(-2)} empty="No findings stored yet. Run the first scan." />
     </Card>
   );

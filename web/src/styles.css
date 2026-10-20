@@ -39,7 +39,7 @@ body {
 .skip:focus { top: 12px; }
 
 
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 28px 48px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 28px 0; }
 .col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-content: start; }
 .feed { grid-column: 1 / -1; }
 
@@ -126,7 +126,7 @@ h2 { text-wrap: balance; margin: 0; font: 500 22px/1.2 var(--display); }
 
 @media (max-width: 1100px) { .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); } .flow ol { grid-template-columns: 1fr 1fr; } .flow li { border-left: 0; border-top: 1px solid var(--line); } }
 @media (max-width: 900px) {
-  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 24px; } .hero .copy { align-self: start; } .rail { grid-template-columns: 1fr 1fr; }
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 24px; } .hero .copy { align-self: start; }
   .tools { grid-template-columns: minmax(0, 1fr); padding: 16px 16px 0; } .flow { padding: 16px 16px 0; }
   .layout { grid-template-columns: minmax(0, 1fr); padding: 16px; }
   .bar, .stats { padding-left: 16px; padding-right: 16px; }
@@ -138,19 +138,13 @@ h2 { text-wrap: balance; margin: 0; font: 500 22px/1.2 var(--display); }
 }
 
 
-/* hero: dark ground, prism art behind, copy at the lower left, four tool tiles on the right */
-.hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 24px; align-items: center; min-height: clamp(560px, 74vh, 720px); padding: 28px; overflow: hidden; border-bottom: 1px solid var(--line); background: #050505; }
+/* hero: dark ground, prism art behind, copy at the upper left */
+.hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: center; min-height: clamp(520px, 68vh, 660px); padding: 28px; overflow: hidden; border-bottom: 1px solid var(--line); background: #050505; }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, #050505 0%, rgba(5, 5, 5, .86) 30%, rgba(5, 5, 5, 0) 62%); pointer-events: none; }
 .hero .prism-wave { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.hero .rail { position: relative; z-index: 1; align-self: end; }
 .hero .copy { position: relative; z-index: 1; align-self: start; padding-top: 28px; max-width: 760px; pointer-events: none; }
 .hero h1 { margin: 0 0 14px; max-width: 16ch; font: 600 clamp(38px, 5.6vw, 84px)/1 var(--body); letter-spacing: -.045em; text-wrap: balance; }
 .hero .sub { margin: 0; max-width: 56ch; color: var(--muted); font-size: 16px; text-wrap: pretty; }
-.rail { position: relative; z-index: 2; display: grid; gap: 12px; align-self: center; }
-.tile { display: grid; gap: 2px; padding: 12px 14px 12px 16px; background: rgba(21, 19, 16, .94); border: 1px solid var(--line); border-left: 3px solid var(--tone); border-radius: 3px; color: inherit; text-decoration: none; transition: border-color .2s, transform .2s; }
-.tile b { font: 600 16px var(--body); }
-.tile span { font: 400 12.5px/1.4 var(--mono); color: var(--muted); }
-.tile:hover, .tile:focus-visible { border-color: var(--tone); transform: translateX(-3px); }
 .skip { position: absolute; left: 12px; top: -48px; z-index: 5; padding: 8px 12px; background: var(--cream); color: var(--ink); border-radius: 3px; }
 .skip:focus { top: 12px; }
 
@@ -162,7 +156,7 @@ h2 { text-wrap: balance; margin: 0; font: 500 22px/1.2 var(--display); }
 .flow li b { display: block; margin-bottom: 2px; color: var(--cream); font: 600 15px var(--body); }
 
 /* the four tool cards */
-.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 18px 28px 0; }
+.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 18px 28px 48px; }
 .tool { display: flex; flex-direction: column; min-width: 0; padding: 18px 18px 14px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--tone); border-radius: 3px; scroll-margin-top: 16px; }
 .tool h3 { margin: 0 0 4px; font: 500 22px/1.2 var(--display); }
 .tool .role { margin: 0 0 12px; color: var(--muted); font-size: 13.5px; text-wrap: pretty; }

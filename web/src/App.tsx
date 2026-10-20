@@ -4,7 +4,7 @@ import { findConflicts, graphData } from "./derive";
 import PrismWave from "./components/PrismWave";
 import MemoryGraph from "./components/MemoryGraph";
 import { Conflicts, Drafts, Feed, MemoryRows, Panel } from "./components/Panels";
-import { BandCard, CogneeCard, FlexpriceCard, SnykCard, TOOL_COLORS, computeStats } from "./components/Tools";
+import { BandCard, CogneeCard, FlexpriceCard, SnykCard, computeStats } from "./components/Tools";
 
 function useKeep() {
   const [snap, setSnap] = useState<Snapshot | null>(null);
@@ -40,13 +40,6 @@ export default function App() {
     };
   }, [s]);
 
-  const tiles = [
-    { id: "band", name: "Band", a: `${st.agents} agents, ${st.harnesses} harnesses`, b: `${st.approvals} approvals, ${st.waiting} waiting` },
-    { id: "cognee", name: "Cognee", a: `${st.memories} memories`, b: `${st.datasets.length} datasets, ${s.backend}` },
-    { id: "flexprice", name: "Flexprice", a: `${Math.round(s.balance)} credits left`, b: s.gate.allow ? "deep research allowed" : "deep research gated" },
-    { id: "snyk", name: "Snyk", a: `${st.findings} ${st.findings === 1 ? "finding" : "findings"} in memory`, b: st.findings ? "blocking until fixed" : "no scan stored yet" },
-  ] as const;
-
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
@@ -68,16 +61,28 @@ export default function App() {
           <h1>Promises kept. Stories straight.</h1>
           <p className="sub">Agents on Band remember every promise in Cognee, check each message before it goes out, meter their work in Flexprice and have every fix scanned by Snyk.</p>
         </div>
-        <nav className="rail" aria-label="The four tools">
-          {tiles.map((t) => (
-            <a key={t.id} href={`#${t.id}`} className="tile" data-ray={TOOL_COLORS[t.id]} style={{ "--tone": `rgb(${TOOL_COLORS[t.id]})` } as React.CSSProperties}>
-              <b>{t.name}</b><span>{t.a}</span><span>{t.b}</span>
-            </a>
-          ))}
-        </nav>
       </section>
 
       <main id="main">
+        {/* what the demo shows first: contradiction, approval, promises; how it works comes after */}
+        <section className="layout" aria-label="What the founder sees">
+          <Panel id="conflict" className="conflict wide" title="Contradiction check" count={d.conflicts.length ? `${d.conflicts.length} to review` : "clear"} hint="What a draft says, set against what your other conversations say.">
+            <Conflicts items={d.conflicts} />
+          </Panel>
+          <Panel id="drafts" title="Approval queue" count={`${st.waiting} pending`} hint="Nothing leaves until you approve in Band. The hash proves what was approved.">
+            <Drafts drafts={s.drafts} />
+          </Panel>
+          <Panel id="promises" title="Promise ledger" count={String(d.promises.length)} hint="Every promise made to investors and customers, from Cognee memory.">
+            <MemoryRows mems={d.promises} empty={snap ? "No promises yet. Paste a conversation into Band and the Listener will log them here." : "Waiting for keep-api. Start it with: KEEP_BACKEND=local python -m keep.api"} />
+          </Panel>
+          <Panel id="graph" className="graph wide" title="Memory graph" count={`${d.nodes.length} nodes, ${d.links.length} links`} hint="Each hub is a Cognee dataset. Links join a pending draft to the memory that contradicts it.">
+            <MemoryGraph nodes={d.nodes} links={d.links} />
+          </Panel>
+          <Panel id="events" title="Live activity" className="feed wide" count={String(s.events.length)}>
+            <Feed events={s.events} />
+          </Panel>
+        </section>
+
         <section className="flow" aria-label="How a conversation moves through the system">
           <ol>
             <li><b>Founder</b>pastes a call, ticket or meeting</li>
@@ -93,24 +98,6 @@ export default function App() {
           <CogneeCard s={s} st={st} />
           <FlexpriceCard s={s} st={st} />
           <SnykCard s={s} st={st} />
-        </section>
-
-        <section className="layout" aria-label="What the founder sees">
-          <Panel id="promises" title="Promise ledger" count={String(d.promises.length)} hint="Every promise made to investors and customers, from Cognee memory.">
-            <MemoryRows mems={d.promises} empty={snap ? "No promises yet. Paste a conversation into Band and the Listener will log them here." : "Waiting for keep-api. Start it with: KEEP_BACKEND=local python -m keep.api"} />
-          </Panel>
-          <Panel id="drafts" title="Approval queue" count={`${st.waiting} pending`} hint="Nothing leaves until you approve in Band. The hash proves what was approved.">
-            <Drafts drafts={s.drafts} />
-          </Panel>
-          <Panel id="conflict" className="conflict wide" title="Contradiction check" count={d.conflicts.length ? `${d.conflicts.length} to review` : "clear"} hint="What a draft says, set against what your other conversations say.">
-            <Conflicts items={d.conflicts} />
-          </Panel>
-          <Panel id="graph" className="graph wide" title="Memory graph" count={`${d.nodes.length} nodes, ${d.links.length} links`} hint="Each hub is a Cognee dataset. Links join a pending draft to the memory that contradicts it.">
-            <MemoryGraph nodes={d.nodes} links={d.links} />
-          </Panel>
-          <Panel id="events" title="Live activity" className="feed wide" count={String(s.events.length)}>
-            <Feed events={s.events} />
-          </Panel>
         </section>
       </main>
     </>
