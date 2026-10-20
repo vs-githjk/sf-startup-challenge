@@ -49,3 +49,7 @@ outbox/
 
 # local agent worktrees
 .claude/
+
+# third party reference clones (see clone/README.md)
+clone/*
+!clone/README.md

@@ -319,6 +319,8 @@ async function refresh() {
     $("c-usage").textContent = `${agents.length} agents`;
     $("c-sec").textContent = finds.length ? `${finds.length} stored` : "no scan yet";
     $("c-events").textContent = `${events.length}`;
+    $("t-prom").textContent = String(promises.length).padStart(2, "0");
+    $("t-conf").textContent = String(conflicts.length).padStart(2, "0");
     tween($("s-promises"), promises.length);
     tween($("s-risks"), risks.length);
     tween($("s-blocks"), conflicts.length);
