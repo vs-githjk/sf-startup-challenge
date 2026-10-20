@@ -19,14 +19,14 @@ Points = score x weight / 5. Max is 130 with both bonuses.
 
 | Criterion | Weight | Now | Points | Target | Target pts | Evidence now | Biggest gap |
 |---|---|---|---|---|---|---|---|
-| Band | 25 | 1 | 5.0 | 5 | 25 | Agent instruction files only | Band Desktop not run: no room, board, @mention or approval |
-| Cognee | 25 | 3 | 15.0 | 5 | 25 | PR #3 merged: Cognee as a container behind keep-api, ledger-scoped recall, forget and improve; 29 tests pass. Real run reported by Vidyut and Abhinav, not re-run by me | No restart or cross-agent proof on video; Neo4j view not shown |
+| Band | 25 | 1 | 5.0 | 5 | 25 | Band Desktop installed and signed in, daemon running, Claude Code integration installed (`band preflight` ok); agent instruction files | No room yet, so no board, @mention or approval run |
+| Cognee | 25 | 3 | 15.0 | 5 | 25 | PR #3 merged: Cognee as a container behind keep-api, ledger-scoped recall, forget and improve; 29 tests pass. I ran it live on this machine: Cognee and Neo4j containers healthy, keep-api on CogneeBackend, remember 8s, recall 3s (a reworded query hit), forget ok | No restart or cross-agent proof on video; Neo4j view not shown |
 | Viability | 20 | 3 | 12.0 | 4 | 16 | Buyer, price, why now, competitor research | Prices not verified live; no customer evidence |
-| Execution and demo | 20 | 2 | 8.0 | 4 | 16 | UI built and checked in demo mode | Not tested on live keep-api; no end-to-end run; no video |
+| Execution and demo | 20 | 3 | 12.0 | 4 | 16 | UI built and served live by keep-api on real Cognee (shows backend, memories, credits); simplified to one connections list | No end-to-end run with Band agents; no video |
 | Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction check designed and drawn | Brain never produced a real block |
 | Flexprice | 10 | 3 | 6.0 | 4 | 8 | Gate denial shown from the live wallet using a 50 credit demo customer (`lumen_lowcredit`); setup ran against the real Flexprice account (customer, 3 meters, plan, subscription, wallet); I sent one cost event, flexprice_synced True; gate reads the live wallet | Not on video; no dashboard capture; local and Flexprice balances differ (async) |
 | Snyk | 10 | 3 | 6.0 | 4 | 8 | Organizers' scorer ran for real (Rishit, public URL): 9.8 of 10, 9.9 after the md5 fix; Snyk Code now 0 issues (my rescan on main); scan wrapper `scripts/snyk-scan.sh` and `.snyk` (Python 3.12) merged in PR #4 | Scorer's own dependency scan did not run (Rishit's separate scan: 61 deps, 1 low); reviewer loop never run in Band |
-| **Total** | **130** | | **56.0** | | **106** | | |
+| **Total** | **130** | | **60.0** | | **106** | | |
 
 History (add a row each checkpoint):
 
@@ -37,6 +37,7 @@ History (add a row each checkpoint):
 | after PR #3 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | 29 tests pass; Cognee in a container; Band still not run |
 | after PR #4 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | Snyk tooling added, no new run, so no change |
 | after build/agents-band merged | 56.0 | 5 | 15 | 12 | 8 | 4 | 6 | 6 | Official scorer 9.8 (Rishit); code 0 issues; gate denial shown live |
+| after live Cognee run and UI on keep-api | 60.0 | 5 | 15 | 12 | 12 | 4 | 6 | 6 | Real round trip on Cognee; Band signed in but no room yet |
 
 ## 2. How the four tools depend on each other
 
