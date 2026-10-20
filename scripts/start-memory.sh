@@ -18,15 +18,16 @@ if [ "${1:-}" = "--local" ]; then
 fi
 
 need LLM_API_KEY; need NEO4J_PASSWORD
+export COGNEE_URL="http://127.0.0.1:${COGNEE_PORT:-8000}"  # keep-api inherits it
 docker info >/dev/null 2>&1 || { echo "Docker is not running"; exit 1; }
 
 echo "== starting neo4j + cognee"
 docker compose --env-file .env up -d neo4j cognee
 for i in $(seq 1 60); do
-  curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && break
+  curl -fsS $COGNEE_URL/health >/dev/null 2>&1 && break
   sleep 2
 done
-curl -fsS http://127.0.0.1:8000/health >/dev/null || { echo "cognee not healthy; see: docker compose logs cognee"; exit 1; }
+curl -fsS $COGNEE_URL/health >/dev/null || { echo "cognee not healthy; see: docker compose logs cognee"; exit 1; }
 echo "cognee healthy"
 
 echo "== starting keep-api on Cognee"
