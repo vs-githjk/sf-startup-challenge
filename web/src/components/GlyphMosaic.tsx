@@ -3,128 +3,177 @@ import { STILL } from "../api";
 import type { GLink, GNode } from "../derive";
 import type { Hud } from "./AsciiField";
 
-// Glyph mosaic. One letter, repeated on a grid, is the only pixel: shapes are drawn into a small offscreen
-// canvas (one pixel per cell), read back with getImageData, and each cell paints the letter in that pixel's
-// color and strength. The shapes are a prism, a stepped beam of promises and the spectrum it splits into,
-// plus a block for every memory. The pointer pushes letters aside and lights them up, and the glow fades behind it.
-// This is not ASCII art: there is no brightness ramp of different characters, only one glyph.
+// Glyph mosaic hero. One letter repeated on a grid is the only pixel, painted tone on tone over a light to dark gradient.
+// A memory orb is lit and shaded per cell, its texture turns, it leans against the pointer, and the light follows the pointer.
+// The pointer leaves a stepped trail of red letters (the promise beam) that fades. A band of brighter letters sweeps the grid.
+// With no pointer, a virtual one wanders so the field keeps moving. Memories are small colored clusters.
 
-const LETTER = "P", CW = 10, CH = 13, REACH = 120;
-const INK = [239, 231, 214], BRASS = [224, 169, 59], BAD = [238, 109, 87];
-const KIND: Record<string, number[]> = { promise: BRASS, risk: BAD, draft: INK, claim: [143, 180, 217], finding: [180, 155, 214], decision: [134, 191, 141], correction: [134, 191, 141] };
-const BANDS = [BAD, BRASS, [134, 191, 141], [143, 180, 217]];
+const LETTER = "P", CW = 10, CH = 13, REACH = 130, TRAIL_MS = 1500;
+const INK = [239, 231, 214], BRASS = [224, 169, 59], RED = [238, 109, 87];
+const KIND: Record<string, number[]> = { promise: BRASS, risk: RED, draft: [250, 247, 240], claim: [143, 180, 217], finding: [180, 155, 214], decision: [134, 191, 141], correction: [134, 191, 141] };
+// Must match the .hero background gradient in styles.css.
+const STOPS: [number, number[]][] = [[0, [232, 227, 214]], [0.22, [189, 184, 171]], [0.45, [110, 106, 96]], [0.72, [26, 24, 21]], [0.92, [13, 12, 10]], [1, [13, 12, 10]]];
 
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const mix = (a: number[], b: number[], t: number) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const rgba = (c: number[], a: number) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
 const hash = (s: string) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
-const rgba = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a.toFixed(3)})`;
+const h2 = (a: number, b: number) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+const noise = (x: number, y: number) => {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  return lerp(lerp(h2(xi, yi), h2(xi + 1, yi), u), lerp(h2(xi, yi + 1), h2(xi + 1, yi + 1), u), v);
+};
+const bgAt = (t: number) => {
+  for (let i = 1; i < STOPS.length; i++) if (t <= STOPS[i][0]) return mix(STOPS[i - 1][1], STOPS[i][1], (t - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0] || 1));
+  return STOPS[STOPS.length - 1][1];
+};
 
-export default function GlyphMosaic({ nodes, links, onHud }: { nodes: GNode[]; links: GLink[]; onHud: (h: Hud) => void }) {
+export default function GlyphMosaic({ nodes, onHud }: { nodes: GNode[]; links: GLink[]; onHud: (h: Hud) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const live = useRef({ nodes, links, onHud });
-  live.current = { nodes, links, onHud };
+  const live = useRef({ nodes, onHud });
+  live.current = { nodes, onHud };
 
   useEffect(() => {
     const cv = ref.current!, hero = cv.parentElement!, ctx = cv.getContext("2d")!;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches || STILL;
-    const bg = document.createElement("canvas"), src = document.createElement("canvas");
-    let W = 0, H = 0, cols = 0, rows = 0, heat = new Float32Array(0), px: Uint8ClampedArray = new Uint8ClampedArray(0);
-    let keep: { x0: number; y0: number; x1: number; y1: number }[] = [], stars: { x: number; y: number; n: GNode }[] = [], sig = "";
-    let mx = -1e4, my = -1e4, running = false, last = 0, hudAt = 0, raf = 0, near = 0;
+    const bg = document.createElement("canvas");
+    let W = 0, H = 0, cols = 0, rows = 0, zone = 300, dpr = 1;
+    let keep: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    let heat = new Float32Array(0), trail: { c: number; r: number; t: number }[] = [];
+    let mx = -1e4, my = -1e4, sx = 0, sy = 0, lastCell: [number, number] | null = null;
+    let running = false, last = 0, hudAt = 0, raf = 0, dwell = 0;
     const font = () => `600 ${CH - 2}px "JetBrains Mono", ui-monospace, Consolas, monospace`;
-
     const blocked = (x: number, y: number) => keep.some((k) => x + CW > k.x0 && x < k.x1 && y + CH > k.y0 && y < k.y1);
 
-    // Paint the source image: one pixel per grid cell.
-    const paintSource = () => {
-      src.width = cols; src.height = rows;
-      const s = src.getContext("2d", { willReadFrequently: true })!;
-      s.clearRect(0, 0, cols, rows);
-      const zoneRows = Math.max(6, Math.floor(zone() / CH));
-      // prism: a filled triangle shaded from shadow to light, with grain
-      const ax = cols * 0.7, ay = rows * 0.06, bx = cols * 0.56, by = zoneRows * 0.95, cx = cols * 0.84, cy = zoneRows * 0.95;
-      const g = s.createLinearGradient(bx, 0, cx, 0);
-      g.addColorStop(0, "rgba(120,114,100,.55)"); g.addColorStop(0.55, "rgba(222,214,196,.95)"); g.addColorStop(1, "rgba(90,86,76,.5)");
-      s.fillStyle = g; s.beginPath(); s.moveTo(ax, ay); s.lineTo(bx, by); s.lineTo(cx, cy); s.closePath(); s.fill();
-      // stepped beam of promises entering from the left, one cell wide so it climbs in stairs
-      s.fillStyle = rgba(BAD, 0.95);
-      const x1 = cols * 0.64, y1 = zoneRows * 0.5;
-      for (let x = 0; x <= x1; x++) s.fillRect(x, Math.round((y1 * x) / x1) , 1, 1);
-      // the spectrum it splits into
-      const ox = cols * 0.76, oy = zoneRows * 0.5;
-      BANDS.forEach((c, k) => {
-        s.fillStyle = rgba(c, 0.9);
-        const ey = zoneRows * (0.12 + k * 0.26);
-        for (let x = ox; x < cols; x++) s.fillRect(Math.round(x), Math.round(oy + ((ey - oy) * (x - ox)) / (cols - ox)), 1, 1);
-      });
-      // a block for every memory, placed by a hash of its id and colored by kind
-      stars = live.current.nodes.filter((n) => n.type !== "hub").map((n) => ({ n, x: Math.floor((0.04 + 0.92 * hash(n.id)) * cols), y: Math.floor((0.08 + 0.84 * hash(`${n.id}#`)) * zoneRows) }));
-      for (const st of stars) { s.fillStyle = rgba(KIND[st.n.type] ?? INK, 0.98); s.fillRect(st.x, st.y, 2, 2); }
-      px = s.getImageData(0, 0, cols, rows).data;
-    };
-
-    const zone = () => {
-      const copy = hero.querySelector("[data-keepout=copy]")?.getBoundingClientRect(), h = hero.getBoundingClientRect();
-      return Math.max(90, (copy ? copy.top - h.top : H) - 24);
-    };
-
     const resize = () => {
-      const dpr = Math.min(2, devicePixelRatio || 1);
-      W = hero.clientWidth; H = hero.clientHeight;
+      dpr = Math.min(2, devicePixelRatio || 1);
+      W = hero.clientWidth; H = hero.clientHeight; cols = Math.ceil(W / CW); rows = Math.ceil(H / CH);
       cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
-      cols = Math.ceil(W / CW); rows = Math.ceil(H / CH);
-      heat = new Float32Array(cols * rows);
+      heat = new Float32Array(cols * rows); trail = []; lastCell = null;
       const hr = hero.getBoundingClientRect();
       keep = [...hero.querySelectorAll("[data-keepout]")].map((el) => { const r = el.getBoundingClientRect(); return { x0: r.left - hr.left - 14, y0: r.top - hr.top - 14, x1: r.right - hr.left + 14, y1: r.bottom - hr.top + 14 }; });
-      // faint grid of the letter, drawn once and blitted every frame
+      const copy = hero.querySelector("[data-keepout=copy]")?.getBoundingClientRect();
+      zone = Math.max(220, (copy ? copy.top - hr.top : H) - 20);
+      if (!sx) { sx = W * 0.5; sy = zone * 0.5; }
+      // The faint grid is drawn once, tone on tone: a little lighter than the ground on dark rows, a little darker on light rows.
       bg.width = cv.width; bg.height = cv.height;
       const b = bg.getContext("2d")!;
-      b.setTransform(dpr, 0, 0, dpr, 0, 0); b.font = font(); b.textBaseline = "top"; b.fillStyle = rgba(INK, 0.07);
-      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!blocked(c * CW, r * CH)) b.fillText(LETTER, c * CW, r * CH);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      sig = ""; paintSource(); frame(performance.now());
+      b.setTransform(dpr, 0, 0, dpr, 0, 0); b.font = font(); b.textBaseline = "top";
+      for (let r = 0; r < rows; r++) {
+        const t = (r * CH) / H, base = bgAt(t);
+        b.fillStyle = rgba(mix(base, t < 0.5 ? [40, 38, 34] : [150, 145, 134], 0.2), 0.9);
+        for (let c = 0; c < cols; c++) if (!blocked(c * CW, r * CH)) b.fillText(LETTER, c * CW, r * CH);
+      }
+      frame(performance.now());
+    };
+
+    const stepTrail = (cx: number, cy: number, now: number) => {
+      const c = Math.floor(cx / CW), r = Math.floor(cy / CH);
+      if (c < 0 || r < 0 || c >= cols || r >= rows) { lastCell = null; return; }
+      if (lastCell) { // fill the gap between frames so the trail is one stepped line
+        let [x0, y0] = lastCell; const dx = Math.abs(c - x0), dy = -Math.abs(r - y0), sxn = x0 < c ? 1 : -1, syn = y0 < r ? 1 : -1;
+        let err = dx + dy;
+        for (let i = 0; i < 80; i++) {
+          trail.push({ c: x0, r: y0, t: now });
+          if (x0 === c && y0 === r) break;
+          const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sxn; } if (e2 <= dx) { err += dx; y0 += syn; }
+        }
+      } else trail.push({ c, r, t: now });
+      lastCell = [c, r];
+      if (trail.length > 600) trail.splice(0, trail.length - 600);
     };
 
     const frame = (now: number) => {
       const { nodes: ns, onHud: hud } = live.current;
-      const key = ns.map((n) => n.id).join("|");
-      if (key !== sig) { sig = key; paintSource(); }
-      const dt = Math.min(64, now - last || 16); last = now;
-      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.drawImage(bg, 0, 0);
-      const dpr = cv.width / W; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.font = font(); ctx.textBaseline = "top";
+      const t = reduced ? 2.3 : now / 1000;
+      last = now;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(bg, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.font = font(); ctx.textBaseline = "top";
 
-      // an idle glow wanders over the memories so the field is alive before anyone moves the mouse
-      let gx = mx, gy = my;
-      if (gx < -1000 && stars.length) { const s = stars[Math.floor(now / 4500) % stars.length]; gx = s.x * CW; gy = s.y * CH; }
+      // virtual pointer: the real one if present, otherwise a slow wander so the scene never sits still
       const idle = mx < -1000;
+      const px = idle ? W * (0.5 + 0.3 * Math.sin(t * 0.55)) : mx, py = idle ? zone * (0.5 + 0.28 * Math.sin(t * 0.41 + 1)) : my;
+      sx += (px - sx) * (reduced ? 1 : 0.12); sy += (py - sy) * (reduced ? 1 : 0.12);
+      if (!reduced) stepTrail(sx, sy, now);
 
-      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-        const i = r * cols + c, o = i * 4, a = px[o + 3] / 255, x = c * CW, y = r * CH;
-        const d = Math.hypot(x + CW / 2 - gx, y + CH / 2 - gy), f = d < REACH ? 1 - d / REACH : 0;
-        if (f > heat[i]) heat[i] = f * (idle ? 0.55 : 1);
-        const h = heat[i]; heat[i] = h > 0.02 ? h * 0.93 : 0;
-        if (a < 0.04 && h < 0.04) continue;
+      // ambient sweep: a diagonal band of slightly stronger letters crosses the grid
+      if (!reduced) {
+        const pos = ((t * 90) % (W + H)) - H * 0.5;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const d = Math.abs(c * CW + r * CH * 0.8 - pos);
+          if (d > 46) continue;
+          const x = c * CW, y = r * CH;
+          if (blocked(x, y)) continue;
+          const base = bgAt(y / H), a = (1 - d / 46) * 0.55;
+          ctx.fillStyle = rgba(mix(base, y / H < 0.5 ? [30, 28, 26] : [190, 184, 170], 0.55), a); ctx.fillText(LETTER, x, y);
+        }
+      }
+
+      // the orb: lit sphere, turning texture, leaning against the pointer, light toward the pointer
+      const R = Math.min(zone * 0.3, W * 0.12), ocx = W * 0.6 - (sx - W / 2) * 0.16, ocy = zone * 0.6 - (sy - zone / 2) * 0.08;
+      let lx = (sx - ocx) / (W * 0.5), ly = (sy - ocy) / (zone * 0.5); const ll = Math.hypot(lx, ly, 0.7); lx /= ll; ly /= ll; const lz = 0.7 / ll;
+      for (let r = Math.floor((ocy - R) / CH); r <= Math.ceil((ocy + R) / CH); r++) for (let c = Math.floor((ocx - R) / CW); c <= Math.ceil((ocx + R) / CW); c++) {
+        if (c < 0 || r < 0 || c >= cols || r >= rows) continue;
+        const x = c * CW, y = r * CH, nx = (x + CW / 2 - ocx) / R, ny = (y + CH / 2 - ocy) / R, r2 = nx * nx + ny * ny;
+        if (r2 > 1 || (r2 > 0.86 && h2(c, r) > 0.62) || blocked(x, y)) continue; // ragged rim
+        const nz = Math.sqrt(1 - r2), lon = Math.atan2(nx, nz) + t * 0.32, lat = Math.asin(ny);
+        const tex = 0.55 * noise(lon * 2.4, lat * 2.8) + 0.45 * noise(lon * 5.1 + 7, lat * 5.7);
+        const b = Math.max(0.04, Math.min(1, (0.16 + 0.84 * Math.max(0, nx * lx + ny * ly + nz * lz)) * (0.5 + 0.7 * tex)));
+        const k = Math.pow(b, 1.35); let col = mix([9, 9, 11], [112, 108, 100], k); if (b > 0.82) col = mix(col, BRASS, (b - 0.82) * 1.6);
+        ctx.fillStyle = rgba(col, 0.96); ctx.fillText(LETTER, x, y);
+      }
+      // a thin drip of letters falls from the orb
+      for (let k = 0; k < 16; k++) {
+        const fall = ((t * 34 + k * 26) % 380), y = Math.round((ocy + R * 0.9 + fall) / CH) * CH;
+        const x = Math.round((ocx + Math.sin(k * 1.7 + t * 0.6) * 22) / CW) * CW;
+        if (y > zone || h2(k, Math.floor(t * 0.7)) > 0.7 || blocked(x, y)) continue;
+        ctx.fillStyle = rgba([40, 40, 42], 0.8 * (1 - fall / 380)); ctx.fillText(LETTER, x, y);
+      }
+
+      // memories: small colored clusters, brighter when the pointer is near
+      const stars = ns.filter((n) => n.type !== "hub").map((n) => ({ n, x: Math.floor((0.04 + 0.92 * hash(n.id)) * cols) * CW, y: Math.floor((0.1 + 0.8 * hash(`${n.id}#`)) * (zone / CH)) * CH }));
+      for (const s of stars) {
+        const near = Math.hypot(s.x - sx, s.y - sy) < REACH, col = KIND[s.n.type] ?? INK;
+        ctx.fillStyle = rgba(col, near ? 1 : 0.8);
+        for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) if (!blocked(s.x + dx * CW, s.y + dy * CH)) ctx.fillText(LETTER, s.x + dx * CW, s.y + dy * CH);
+      }
+
+      // red trail of promise letters, stepped, fading
+      for (let i = trail.length - 1; i >= 0; i--) {
+        const p = trail[i], age = (now - p.t) / TRAIL_MS;
+        if (age >= 1 && !reduced) { trail.splice(i, 1); continue; }
+        const x = p.c * CW, y = p.r * CH;
         if (blocked(x, y)) continue;
-        let col = a >= 0.04 ? [px[o], px[o + 1], px[o + 2]] : INK, alpha = a >= 0.04 ? a * (0.82 + 0.18 * Math.sin(now * 0.0017 + (c * 7 + r * 13) % 11)) : 0;
-        if (h > 0.04) { col = a >= 0.04 ? col : BRASS; alpha = Math.max(alpha, h * 0.9); }
-        const ox = reduced ? 0 : ((x + CW / 2 - gx) / (d || 1)) * f * f * 12, oy = reduced ? 0 : ((y + CH / 2 - gy) / (d || 1)) * f * f * 12;
-        ctx.fillStyle = rgba(col, Math.min(1, alpha)); ctx.fillText(LETTER, x + ox, y + oy);
+        ctx.fillStyle = rgba(RED, (1 - age) * (0.65 + 0.35 * h2(p.c + Math.floor(now / 90), p.r))); ctx.fillText(LETTER, x, y);
+      }
+
+      // pointer glow: letters near the real pointer push away and light up, then cool down
+      if (!idle && !reduced) for (let r = Math.max(0, Math.floor((my - REACH) / CH)); r < Math.min(rows, Math.ceil((my + REACH) / CH)); r++) for (let c = Math.max(0, Math.floor((mx - REACH) / CW)); c < Math.min(cols, Math.ceil((mx + REACH) / CW)); c++) {
+        const x = c * CW, y = r * CH, d = Math.hypot(x + CW / 2 - mx, y + CH / 2 - my), f = d < REACH ? 1 - d / REACH : 0, i = r * cols + c;
+        if (f > heat[i]) heat[i] = f;
+      }
+      if (!reduced) for (let i = 0; i < heat.length; i++) {
+        const h = heat[i]; if (h < 0.04) { heat[i] = 0; continue; }
+        heat[i] = h * 0.94;
+        const c = i % cols, r = (i / cols) | 0, x = c * CW, y = r * CH;
+        if (blocked(x, y)) continue;
+        const dx = x + CW / 2 - mx, dy = y + CH / 2 - my, d = Math.hypot(dx, dy) || 1, push = h * h * 10;
+        ctx.fillStyle = rgba(y / H < 0.5 ? [120, 78, 10] : BRASS, h * 0.95); ctx.fillText(LETTER, x + (dx / d) * push, y + (dy / d) * push);
       }
 
       if (now - hudAt > 90) {
         hudAt = now;
-        const hit = stars.map((s) => ({ s, d: Math.hypot(s.x * CW - gx, s.y * CH - gy) })).filter((t) => t.d < REACH).sort((a, b) => a.d - b.d);
-        near = hit.length ? Math.min(near + 90, 1000) : 0;
-        const locked = near >= 300 && hit.length > 0;
+        const hit = stars.map((s) => ({ s, d: Math.hypot(s.x - sx, s.y - sy) })).filter((q) => q.d < REACH).sort((a, b) => a.d - b.d);
+        dwell = hit.length ? Math.min(dwell + 90, 1000) : 0;
+        const locked = dwell >= 300 && hit.length > 0;
         hud({ state: !stars.length ? "idle" : locked ? "locked" : "scanning", tracked: hit.length, top: locked ? `${hit[0].s.n.type}: ${hit[0].s.n.text.slice(0, 40)}` : "none" });
       }
-      void dt;
     };
 
     const loop = (now: number) => { if (!running) return; if (now - last >= 33) frame(now); raf = requestAnimationFrame(loop); };
     const setRunning = (on: boolean) => { if (reduced || on === running) return; running = on; if (on) raf = requestAnimationFrame(loop); };
     const onMove = (e: PointerEvent) => { const b = cv.getBoundingClientRect(); mx = e.clientX - b.left; my = e.clientY - b.top; };
-    const onLeave = () => { mx = my = -1e4; };
+    const onLeave = () => { mx = my = -1e4; lastCell = null; };
     const onVis = () => setRunning(!document.hidden);
     hero.addEventListener("pointermove", onMove, { passive: true });
     hero.addEventListener("pointerleave", onLeave);
