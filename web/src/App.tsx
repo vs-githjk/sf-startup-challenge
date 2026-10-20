@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FC } from "react";
 import { DEMO, load, type Snapshot } from "./api";
 import { conversations, findConflicts, graphData } from "./derive";
-import { Pipeline, steps } from "./components/Pipeline";
-import MemoryGraph from "./components/MemoryGraph";
-import { Conflicts, Drafts, Feed, MemoryRows, Panel } from "./components/Panels";
-import { Connections, CostPanel, computeStats, connections } from "./components/Tools";
+import { steps } from "./components/Pipeline";
+import { computeStats, connections } from "./components/Tools";
+import { Agents, Contradictions, Conversations, MemoryMap, NeedsYou, Promises, type Data } from "./Screens";
 
 function useKeep() {
   const [snap, setSnap] = useState<Snapshot | null>(null);
@@ -23,6 +22,22 @@ function useKeep() {
     return () => { alive = false; clearInterval(t); document.removeEventListener("visibilitychange", vis); };
   }, []);
   return { snap, error };
+}
+
+// Hash routes keep the screen on refresh and make back/forward work, without a router dependency.
+const SCREENS: { id: string; name: string; C: FC<{ d: Data }> }[] = [
+  { id: "needs-you", name: "Needs you", C: NeedsYou },
+  { id: "contradictions", name: "Contradictions", C: Contradictions },
+  { id: "promises", name: "Promises", C: Promises },
+  { id: "conversations", name: "Conversations", C: Conversations },
+  { id: "memory", name: "Memory map", C: MemoryMap },
+  { id: "agents", name: "Agents and cost", C: Agents },
+];
+const route = () => { const h = location.hash.replace(/^#\/?/, ""); return SCREENS.some((x) => x.id === h) ? h : "needs-you"; };
+function useRoute() {
+  const [r, setR] = useState(route);
+  useEffect(() => { const on = () => setR(route()); addEventListener("hashchange", on); return () => removeEventListener("hashchange", on); }, []);
+  return r;
 }
 
 const EMPTY: Snapshot = { mems: [], drafts: [], agents: [], events: [], balance: 0, start: 1000, gate: { feature: "deep_research", allow: false }, backend: "not connected" };
@@ -55,72 +70,45 @@ export default function App() {
   const links = useMemo(() => connections(s, st, convos.filter((c) => c.origin === "prism").length), [s, st, convos]);
   const flow = useMemo(() => steps(s, st, convos, d.conflicts.length), [s, st, convos, d.conflicts]);
 
+  const data: Data = { s, st, live: !!snap && !error, conflicts: d.conflicts, promises: d.promises, convos, links, flow, nodes: d.nodes, glinks: d.links };
+  const counts: Record<string, number> = { "needs-you": st.waiting, contradictions: d.conflicts.length, promises: d.promises.length, conversations: convos.length };
+  const r = useRoute();
+  const cur = SCREENS.find((x) => x.id === r)!;
+  useEffect(() => { document.title = `${cur.name} - PrismKeep`; }, [cur]);
+
   return (
-    <>
+    <div className="shell">
       <a className="skip" href="#main">Skip to content</a>
-      <header className="bar">
+      <aside className="side">
         <div className="brand">
           <svg className="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 27H3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><path d="M16 3v24" stroke="currentColor" strokeWidth="1.2" opacity=".55" /></svg>
           <span className="word">PrismKeep</span>
-          <span className="tag">{DEMO ? "demo preview, synthetic data" : "synthetic data"}</span>
         </div>
-        <div className="status" role="status" aria-live="polite">
-          <span className={`live ${snap ? (error ? "off" : "on") : ""}`} aria-hidden="true" />
-          <span>{error ? `keep-api offline (${error})` : snap ? (DEMO ? "demo" : "keep-api live") : "connecting"}</span>
+        <nav aria-label="Screens">
+          <ul>
+            {SCREENS.map((x) => (
+              <li key={x.id}>
+                <a href={`#/${x.id}`} aria-current={x.id === r ? "page" : undefined}>
+                  <span>{x.name}</span>
+                  {counts[x.id] ? <b className={x.id === "contradictions" || x.id === "needs-you" ? "hot" : ""}>{counts[x.id]}</b> : null}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <div className="side-foot">
+          <div className="status" role="status" aria-live="polite">
+            <span className={`live ${snap ? (error ? "off" : "on") : ""}`} aria-hidden="true" />
+            <span>{error ? "Memory offline" : snap ? (DEMO ? "Demo data" : "Memory connected") : "Connecting"}</span>
+          </div>
+          <p>{`${Math.round(s.balance)} of ${Math.round(s.start)} credits left`}</p>
+          <p className="tag">{DEMO ? "Sample data" : "Synthetic data"}</p>
         </div>
-      </header>
-
-      <section className="hero" aria-label="Overview">
-        <div className="copy" data-keepout="copy">
-          <p className="eyebrow">Live pipeline</p>
-          <h1>Promises kept.<br />Stories straight.</h1>
-          <p className="sub">Live view of the pipeline: recorded call in, checked and approved message out.</p>
-        </div>
-      </section>
-
-      <main id="main">
-        <section className="layout" aria-label="What the founder sees">
-          <Panel id="flow" className="wide" title="How the data moves" count={`${flow.filter((x) => x.n > 0).length} of ${flow.length} stops active`} hint="One conversation, left to right. Each number is what has passed that stop so far.">
-            <Pipeline items={flow} s={s} st={st} />
-          </Panel>
-          <Panel id="convos" className="wide" title="Recorded and pasted conversations" count={String(convos.length)} hint="Where each memory came from, and what was extracted from it.">
-            <ul className="convos">
-              {convos.length === 0 && <li className="empty">No conversation yet. In Band, ask the Chief of Staff: pull my latest meeting, or paste a transcript.</li>}
-              {convos.map((c) => (
-                <li key={c.source}>
-                  <span className={`origin ${c.origin}`}>{c.origin === "prism" ? "Prism recording" : "Pasted"}</span>
-                  <span className="what">{c.source.replace(/^(prism|pasted):\s*/i, "")}</span>
-                  <span className="got">{[c.promises && `${c.promises} promise${c.promises > 1 ? "s" : ""}`, c.risks && `${c.risks} risk${c.risks > 1 ? "s" : ""}`, c.claims && `${c.claims} claim${c.claims > 1 ? "s" : ""}`, c.other && `${c.other} other`].filter(Boolean).join(", ")}</span>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-          <Panel id="connections" className="wide" title="Connections" count={`${links.filter((l) => l.ok).length} of ${links.length} live`} hint="Each tool the demo uses and whether it is answering.">
-            <Connections links={links} />
-          </Panel>
-          <Panel id="promises" title="Promise ledger" count={String(d.promises.length)} hint="Every promise made to investors and customers, from Cognee memory.">
-            <MemoryRows mems={d.promises} empty={snap ? "No promises yet. Paste a conversation into Band and the Listener will log them here." : "Waiting for keep-api. Start it with: KEEP_BACKEND=local python -m keep.api"} />
-          </Panel>
-          <Panel id="drafts" title="Approval queue" count={`${st.waiting} pending`} hint="Nothing leaves until you approve in Band. The hash proves what was approved.">
-            <Drafts drafts={s.drafts} />
-          </Panel>
-          <Panel id="cost" title="Agent cost and credits" count={`${s.agents.length} agents`}>
-            <CostPanel s={s} st={st} />
-          </Panel>
-          <Panel id="security" title="Security" count={st.findings ? `${st.findings} stored` : "no scan yet"} hint="Snyk findings the Security Reviewer stored. Repeat findings are remembered.">
-            <MemoryRows mems={s.mems.filter((m) => m.dataset === "eng_security")} empty="No findings stored yet. The first Snyk scan will appear here." />
-          </Panel>
-          <Panel id="conflict" className="conflict wide" title="Contradiction check" count={d.conflicts.length ? `${d.conflicts.length} to review` : "clear"} hint="What a draft says, set against what your other conversations say.">
-            <Conflicts items={d.conflicts} />
-          </Panel>
-          <Panel id="graph" className="graph wide" title="Memory graph" count={`${d.nodes.length} nodes, ${d.links.length} links`} hint="Each hub is a Cognee dataset. Links join a pending draft to the memory that contradicts it.">
-            <MemoryGraph nodes={d.nodes} links={d.links} />
-          </Panel>
-          <Panel id="events" title="Handoffs and activity" className="feed wide" count={String(s.events.length)}>
-            <Feed events={s.events} />
-          </Panel>
-        </section>
+      </aside>
+      <main id="main" className="page">
+        <header className="page-h"><h1>{cur.name}</h1></header>
+        <cur.C d={data} />
       </main>
-    </>
+    </div>
   );
 }
