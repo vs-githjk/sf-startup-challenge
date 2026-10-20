@@ -1,98 +1,149 @@
-# How the four tools score together
+# Scoring: where we stand and how the four tools earn points
 
-This folder explains how Band, Cognee, Flexprice and Snyk connect, and which demo beat earns which points. Update the "Evidence" column as each beat works.
+One page for the whole team. Update it at every checkpoint (11:50, 12:30, 13:15, 13:45, 14:00). Rule: a number goes in only if a real run produced it.
 
-## The loop
+Last updated: 2026-10-20, after Rishit's Flexprice merge and the path-traversal fix.
 
-```mermaid
-flowchart LR
-    Band[Band: rooms, board, approvals, cost] -->|agents call keep| Keep[keep-api]
-    Keep --> Cognee[(Cognee + Neo4j: memory)]
-    Keep -->|usage events| Flex[Flexprice: meters, credits, gate]
-    Snyk[Snyk: scans] -->|findings| Cognee
-    Snyk -->|block or clear task| Band
-    Cognee -->|recall changes next action| Band
-    Flex -->|credits gate features, cost card| Band
-```
+## 1. Scoreboard (self score, strict)
 
-Each tool depends on another, so removing one breaks the demo:
-
-| Remove | What breaks |
-|---|---|
-| Band | No board, handoffs, approval or per-agent cost |
-| Cognee | No restart recall, no cross-agent block, no correction effect |
-| Flexprice | No credit gate, no cost pass-through |
-| Snyk | No blocked task, no repeat-finding memory, no repo score |
-
-## Points map
-
-| Criterion | Weight | Beat | Evidence | Status |
-|---|---|---|---|---|
-| Band | 25 | Two rooms, six agents, board To-do to Done, approval, cost view | video 0:12, 2:15, 2:35 | not started |
-| Cognee | 25 | Restart recall, cross-agent block, forget and improve, Neo4j | video 1:05 to 2:15 | not started |
-| Viability | 20 | Buyer, price, why now | README, ideas.md | drafted |
-| Execution and demo | 20 | One live run, UI, 3:00 video | video, ui/ | not started |
-| Innovation | 10 | Memory limits what is said to investors | pitch line | drafted |
-| Flexprice | +10 | Real events, credits gate deep research | dashboard capture | not started |
-| Snyk | +10 | Blocked task, repeat finding, real repo score | Eng room, scorer report | not started |
-
-## Where we stand now (self score)
-
-Score each criterion 0 to 5, then points = score x weight / 5 (max 130 with both bonuses). Be strict: a feature only counts when it has run in a real Band room or against the real service, not when the code merely exists. Update this table at every checkpoint and add a row to the history below.
+Points = score x weight / 5. Max is 130 with both bonuses.
 
 | Score | Meaning |
 |---|---|
 | 0 | Nothing exists |
-| 1 | Written (code, prompts or docs) but never run |
+| 1 | Written (code, prompts, docs) but never run |
 | 2 | Runs locally or offline only |
 | 3 | Runs against the real tool once |
 | 4 | Runs reliably and is on video |
-| 5 | Judges can see it change agent behavior live |
+| 5 | Judges see it change agent behavior live |
 
-| Criterion | Weight | Now (0 to 5) | Points now | Target | Points target | What is missing |
-|---|---|---|---|---|---|---|
-| Band | 25 | 1 | 5.0 | 5 | 25 | Band Desktop not yet signed in, no room, no board run, agents not attached |
-| Cognee | 25 | 1 | 5.0 | 5 | 25 | Real Cognee plus Neo4j not yet run, no timed remember and recall, no restart proof |
-| Viability | 20 | 3 | 12.0 | 4 | 16 | Prices still unverified live, no customer evidence beyond research |
-| Execution and demo | 20 | 1 | 4.0 | 4 | 16 | No end-to-end run, no video, UI is a starter |
-| Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction block designed but never shown |
-| Flexprice | 10 | 1 | 2.0 | 4 | 8 | No API key, no event sent, no wallet or gate run |
-| Snyk | 10 | 1 | 2.0 | 3 | 6 | No token, no baseline score, no block and unblock cycle |
-| **Total** | **130** | | **34.0** | | **104** | |
+| Criterion | Weight | Now | Points | Target | Target pts | Evidence now | Biggest gap |
+|---|---|---|---|---|---|---|---|
+| Band | 25 | 1 | 5.0 | 5 | 25 | Agent instruction files only | Band Desktop not run: no room, board, @mention or approval |
+| Cognee | 25 | 2 | 10.0 | 5 | 25 | `keep` API with offline backend, 17 tests pass | Real Cognee and Neo4j never run; no restart or cross-agent proof |
+| Viability | 20 | 3 | 12.0 | 4 | 16 | Buyer, price, why now, competitor research | Prices not verified live; no customer evidence |
+| Execution and demo | 20 | 2 | 8.0 | 4 | 16 | UI built and checked in demo mode | Not tested on live keep-api; no end-to-end run; no video |
+| Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction check designed and drawn | Brain never produced a real block |
+| Flexprice | 10 | 3 | 6.0 | 4 | 8 | Rishit: workspace customer, 3 meters, 1,000 credit wallet, gate reads live balance | I have not re-run it; gate not shown denying; no dashboard capture |
+| Snyk | 10 | 2 | 4.0 | 4 | 8 | Snyk Code ran on our repo: 0 issues | Dependency score is bad (section 3); reviewer agent never run in Band |
+| **Total** | **130** | | **49.0** | | **106** | | |
 
-Basis for "Now": the repo has keep-api, the CLI, billing client, outbox, agent instructions, seed data and a UI starter. The team reports 9 passing tests, which I have not re-run. Nothing has been run against Band, real Cognee, Flexprice or Snyk yet.
+History (add a row each checkpoint):
 
-### Per tool readiness
-
-| Tool | Installed or signed in | Configured | Run once | On video | Next action |
-|---|---|---|---|---|---|
-| Band Desktop | no | no | no | no | Install, sign in, create HQ and Eng rooms, one @mention round trip |
-| Cognee | pinned in lockfile | no | no | no | Neo4j up, `KEEP_BACKEND=cognee`, time remember, recall, forget |
-| Flexprice | no key | no | no | no | Get sponsor key, send one `keep cost` event |
-| Snyk | no token | no | no | no | Create PAT, run `scripts/security-score.sh --quick`, record baseline |
-
-Tick a cell only when it is true today.
-
-### Score history
-
-| Time | Total | Band | Cognee | Viability | Execution | Innovation | Flexprice | Snyk | Note |
+| Time | Total | Band | Cognee | Viab | Exec | Innov | Flex | Snyk | Note |
 |---|---|---|---|---|---|---|---|---|---|
-| start of build | 34.0 | 5 | 5 | 12 | 4 | 4 | 2 | 2 | Code and docs written, nothing run live |
+| start of build | 34.0 | 5 | 5 | 12 | 4 | 4 | 2 | 2 | Code and docs only |
+| after UI, path fix, Flexprice merge | 49.0 | 5 | 10 | 12 | 8 | 4 | 6 | 4 | 17 tests pass; nothing live in Band yet |
 
-## Snyk beyond code fixes (proposed)
+## 2. How the four tools depend on each other
 
-1. Evidence tier "Scan verified": Brain blocks a security claim in a draft unless the latest scan in memory supports it.
-2. A promise like "fix the export leak" is marked kept only with a clean rescan reference.
+```mermaid
+flowchart LR
+    Band[Band: rooms, board, approvals, cost] -->|agents call keep| Keep[keep-api]
+    Keep --> Cognee[(Cognee + Neo4j)]
+    Keep -->|usage events| Flex[Flexprice: meters, wallet, gate]
+    Snyk[Snyk: scans] -->|findings| Cognee
+    Snyk -->|block or clear task| Band
+    Cognee -->|recall changes next action| Band
+    Flex -->|gate and cost card| Band
+```
+
+| Remove | What breaks |
+|---|---|
+| Band | No board, handoffs, founder approval or per-agent cost |
+| Cognee | No restart recall, no cross-agent block, corrections change nothing |
+| Flexprice | No credit gate, no cost pass-through |
+| Snyk | No blocked task, no repeat-finding memory, no repo score |
+
+## 3. Snyk: the real picture
+
+### How the organizers score us
+Score = 10 - (critical x 3 + high x 1 + medium x 0.3 + low x 0.1). More than 10 findings above low scores 0. They run `snyk test --all-projects` and `snyk code test`.
+
+### Where we are
+
+| Scan | Result | Source |
+|---|---|---|
+| Snyk Code (our code) | 0 issues. Was 4 low before `keep/paths.py` | my run, 2026-10-20 |
+| Snyk Open Source on the repo as is | "No supported files found". Snyk does not read `uv.lock` | my run and Rishit's baseline |
+| Same tree exported to requirements.txt (outside the repo) | 210 deps: 5 critical, 18 high, 7 medium, 2 low | Rishit's baseline in `plan/progress.md` |
+| Organizers' Docker scorer | Not completed. Docker is running now, but the scorer's `tar` step fails on a Windows path | my run |
+| Snyk Container (Neo4j image) | Not run | |
+
+### The risk to take seriously
+If the organizers' scorer manages to read our dependencies, the count above is far over the limit of 10 and the score is **0**. If it cannot read them (as happens today), the notes will say "dependency scan did not run". We do not know which way it goes, so plan for the bad case.
+
+Sources of the findings (from Rishit's baseline):
+
+| Package | Pulled in by | Fix |
+|---|---|---|
+| pillow 12.3.0 | fastembed | 13.0.0, blocked by fastembed pin |
+| onnxruntime 1.23.2 | cognee | 1.24.1, blocked by cognee pin |
+| litellm 1.106.0, diskcache 5.6.3 | cognee | none |
+| langchain-community 0.4.2 (critical SSRF) | band-sdk[langgraph] | none |
+
+Options to decide (Vidyut and Rishit):
+1. Drop `fastembed` and use a hosted embedding provider, which removes the pillow finding.
+2. Check whether the `langgraph` extra of the Band SDK is needed. Removing it removes the critical SSRF.
+3. Explain what cannot be fixed in `docs/security.md`. Do not add ignores to hide findings.
+4. Run the real scorer on Linux (WSL) and record the true number before deciding anything.
+
+### Snyk against the brief
+
+| Brief asks | Status |
+|---|---|
+| Snyk CLI and Snyk Code | Works, token in `.env` |
+| Dependencies | Blocked (above) |
+| Containers | Not done |
+| Reviewer agent in the Band room | Written in `agents/security_reviewer/CLAUDE.md`, never run |
+| Posts findings, blocks the work item | Designed, needs Band board |
+| Stores recurring issues in Cognee | Designed (`keep remember --dataset eng_security`), never run on real Cognee |
+| Vulnerable demo app | `lumen-app` not created yet |
+| Review helper | `scripts/snyk_review.py` not written yet |
+
+### Using Snyk beyond code fixes (proposed)
+1. Evidence tier "Scan verified": Brain blocks a security claim in a draft unless a stored scan supports it.
+2. A promise like "fix the export leak" counts as kept only with a clean rescan reference.
 3. Dependency gate: the reviewer scans any package an agent adds.
-4. Scan trends stored in `company` memory so investor updates and customer questionnaires use real posture.
-5. Billing: "security-gated fix" is a metered, charged action in Flexprice.
+4. Scan trends stored in `company` memory so investor updates cite real posture.
+5. "Security-gated fix" is a metered, charged action in Flexprice.
 
-## Security score record
+Snyk detects and suggests the fixed version. `snyk fix` does not support `uv`, so our Fixer agent applies fixes.
 
-Record every scorer run here and in `plan/progress.md`. Never write a number that was not produced by a real run.
+### Security score record
+Record every run here and in `plan/progress.md`.
 
-| Time | Raw `snyk test` | `snyk code test` | Scorer result | Note |
+| Time | `snyk test` | `snyk code test` | Organizers' scorer | Note |
 |---|---|---|---|---|
-| baseline | | | | |
+| baseline (Rishit) | no supported files; exported tree 5C/18H/7M/2L | 4 low | not run | Docker missing then |
+| after path fix | not scanned (Snyk 503 on uv.lock) | 0 issues | fails on Windows path | `keep/paths.py` |
 
-| 2026-10-20 after path fix | not scanned (Snyk service 503, uv.lock) | 0 issues (was 4 low) | not run | keep/paths.py confines env and CLI paths |
+## 4. Demo beat checklist
+
+Tick only when the beat has run for real and been recorded.
+
+| Beat | Time | Points it earns | Done |
+|---|---|---|---|
+| Two rooms, six agents, plan on the board | 0:12 | Band | no |
+| Cognee recall in the Chief of Staff message | 0:12 | Cognee | no |
+| Fixer recalls past finding, Snyk blocks, fix, clean rescan | 0:35 | Snyk, Cognee, Band | no |
+| Restart Drafter and memory, recall still works | 1:05 | Cognee | no |
+| Brain blocks "no churn" using the Acme call | 1:20 | Cognee, Innovation | no |
+| Founder correction: forget and improve, redraft | 1:50 | Cognee | no |
+| Founder approval through `band ask`, hash shown | 2:15 | Band | no |
+| Band usage view, cost card, credit gate denies | 2:35 | Band, Flexprice | no |
+| End card with the real scorer number | 2:52 | Snyk | no |
+
+## 5. Next actions, in order
+
+1. Get a real scorer number (WSL or Linux checkout). Decide the dependency options above.
+2. Band gate: sign in, one room, one @mention, one task moved to Done.
+3. Real Cognee and Neo4j behind `keep-api`; time remember, recall, forget.
+4. Create `lumen-app` (outside this repo) and `scripts/snyk_review.py`.
+5. Wire the UI to real Brain block events once their shape is agreed.
+
+## 6. How to update this page
+- Change a score only with a run behind it, and write the evidence in the table.
+- Add a row to both history tables at each checkpoint.
+- Never write a score you did not get from a tool.
+- No em or en dashes, no secrets.
