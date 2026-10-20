@@ -27,7 +27,7 @@ services:
       neo4j:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${COGNEE_PORT:-8000}:8000"  # COGNEE_PORT: Windows may reserve 8000
     environment:
       ENABLE_BACKEND_ACCESS_CONTROL: "false"
       REQUIRE_AUTHENTICATION: "false"
