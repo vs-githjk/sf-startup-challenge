@@ -50,3 +50,7 @@ outbox/
 # local agent worktrees
 /.claude/
 .keep-api.log
+
+# third party reference clones (see clone/README.md)
+clone/*
+!clone/README.md

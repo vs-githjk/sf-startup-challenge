@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from . import billing
 from .memory import make_backend
+from .paths import confine
 from .store import Store, now
 
 log = logging.getLogger("keep.api")
@@ -75,7 +76,7 @@ def create_app() -> FastAPI:
     store = Store()
     backend = make_backend(store)
     wallet = billing.Wallet(store)
-    outbox = Path(os.environ.get("KEEP_OUTBOX_DIR", "outbox")).resolve()
+    outbox = confine(os.environ.get("KEEP_OUTBOX_DIR", "outbox"))
     customer = os.environ.get("FLEXPRICE_CUSTOMER_ID", "lumen")
 
     @asynccontextmanager

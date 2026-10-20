@@ -10,6 +10,7 @@ from keep.api import create_app
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("KEEP_BACKEND", "local")
+    monkeypatch.setenv("KEEP_ROOT", str(tmp_path))
     monkeypatch.setenv("KEEP_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("KEEP_OUTBOX_DIR", str(tmp_path / "outbox"))
     monkeypatch.delenv("FLEXPRICE_API_KEY", raising=False)
