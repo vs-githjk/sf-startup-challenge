@@ -60,3 +60,20 @@ export function graphData(mems: Memory[], drafts: Draft[], conflicts: Conflict[]
   for (const c of conflicts) if (c.draftId && seen.has(`d:${c.draftId}`) && seen.has(`m:${c.memId}`)) links.push({ a: `d:${c.draftId}`, b: `m:${c.memId}`, type: "conflict" });
   return { nodes, links };
 }
+
+// A conversation is every memory that shares a source. Where the source names Prism (the Recall.ai recording bot)
+// it is a recorded meeting; anything else was pasted into Band. keep-api cannot see Band, so this is the only honest signal.
+export type Convo = { source: string; origin: "prism" | "pasted"; promises: number; risks: number; claims: number; other: number; datasets: string[]; at: string };
+export function conversations(mems: Memory[]): Convo[] {
+  const by = new Map<string, Convo>();
+  for (const m of mems) {
+    const src = (m.source ?? "").trim();
+    if (!src || m.dataset === "eng_security" || m.kind === "decision" || /metrics/i.test(src)) continue;
+    const c = by.get(src) ?? { source: src, origin: /prism|recall/i.test(src) ? "prism" : "pasted", promises: 0, risks: 0, claims: 0, other: 0, datasets: [], at: m.created_at };
+    if (m.kind === "promise") c.promises++; else if (m.kind === "risk") c.risks++; else if (m.kind === "claim") c.claims++; else c.other++;
+    if (!c.datasets.includes(m.dataset)) c.datasets.push(m.dataset);
+    if (m.created_at > c.at) c.at = m.created_at;
+    by.set(src, c);
+  }
+  return [...by.values()].sort((a, b) => (a.at < b.at ? 1 : -1));
+}

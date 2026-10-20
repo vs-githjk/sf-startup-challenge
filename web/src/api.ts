@@ -3,7 +3,7 @@ export type Memory = { id: string; dataset: string; kind: string; text: string; 
 export type Draft = { id: string; to_name: string; subject: string; body: string; status: string; approved_sha256?: string | null };
 export type Agent = { agent: string; harness?: string; tokens_in: number; tokens_out: number; tasks: number; usd?: number | null };
 export type Ev = { id: number; ts: string; type: string; agent?: string; payload?: Record<string, unknown> };
-export type Gate = { feature: string; allow: boolean; cost?: number; balance?: number };
+export type Gate = { feature: string; allow: boolean; cost?: number; balance?: number; source?: string };
 export type Snapshot = { mems: Memory[]; drafts: Draft[]; agents: Agent[]; events: Ev[]; balance: number; start: number; gate: Gate; backend: string };
 
 export const DEMO = new URLSearchParams(location.search).has("demo");
@@ -12,11 +12,11 @@ export const STILL = new URLSearchParams(location.search).has("still");
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const DEMO_DATA: Snapshot = {
   mems: [
-    { id: "m1", dataset: "rel_northline", kind: "promise", text: "Founder promised Sarah Chen the retention cohort by Oct 17.", source: "northline meeting Oct 13", created_at: ago(120) },
-    { id: "m2", dataset: "rel_acme", kind: "promise", text: "SSO fix promised to Acme by Friday.", source: "acme call Oct 13", created_at: ago(118) },
-    { id: "m3", dataset: "rel_acme", kind: "risk", text: "Acme will look at alternatives if SSO slips: churn risk this quarter.", source: "acme call Oct 13", created_at: ago(117) },
+    { id: "m1", dataset: "rel_northline", kind: "promise", text: "Founder promised Sarah Chen the retention cohort by Oct 17.", source: "prism: Northline partner meeting Oct 13", created_at: ago(120) },
+    { id: "m2", dataset: "rel_acme", kind: "promise", text: "SSO fix promised to Acme by Friday.", source: "prism: Acme call Oct 13", created_at: ago(118) },
+    { id: "m3", dataset: "rel_acme", kind: "risk", text: "Acme will look at alternatives if SSO slips: churn risk this quarter.", source: "prism: Acme call Oct 13", created_at: ago(117) },
     { id: "m4", dataset: "company", kind: "claim", text: "Metric: weekly active workspaces grew 18 percent.", source: "metrics.json", created_at: ago(90) },
-    { id: "m6", dataset: "rel_acme", kind: "risk", text: "Acme reported the CSV export shows another customer's rows.", source: "support ticket Oct 20", created_at: ago(40) },
+    { id: "m6", dataset: "rel_acme", kind: "risk", text: "Acme reported the CSV export shows another customer's rows.", source: "pasted: Acme support ticket Oct 20", created_at: ago(40) },
     { id: "m7", dataset: "company", kind: "decision", text: "Security fixes need a clean Snyk rescan before Done.", source: "chief of staff", created_at: ago(35) },
     { id: "m5", dataset: "eng_security", kind: "finding", text: "Raw SQL string in CSV export path (seen 2 times).", source: "snyk code", created_at: ago(30) },
   ],
