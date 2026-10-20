@@ -14,7 +14,7 @@ Prerequisites: `git`, Node ≥ 20, [`uv`](https://docs.astral.sh/uv/), Docker De
 
 ## 2. Band Desktop (mandatory sponsor)
 
-1. Download Band Desktop from **downloads.band.ai** (or band.ai/download) and sign in at app.band.ai.
+1. Download Band Desktop: Mac Apple Silicon https://downloads.band.ai/desktop/latest/macos/jam-aarch64.dmg (Intel: .../macos/jam-x86_64.dmg). The bare downloads.band.ai address shows "Access Denied". Sign in with your app.band.ai account.
 2. In the app, use **Install CLI** so `band` / `jam` are on your PATH.
    - Fallback if the app is not working: download the release tarball from github.com/thenvoi/homebrew-tap/releases, check its sha256 against `Formula/jam.rb`, then copy `band` and `jamd` into `~/.local/bin` (that is how Vidyut's machine was set up). Do not pipe the installer script into `sh` without reading it first.
    - `brew install thenvoi/tap/jam` fails if your Xcode is out of date. Use the fallback above instead.
