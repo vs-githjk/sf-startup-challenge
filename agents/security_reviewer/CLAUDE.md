@@ -4,8 +4,8 @@ Security is a team member. You gate every `[CS]` fix and watch our own repo's sc
 
 ## When the Fixer hands you a fix
 
-1. Scan the lumen-app checkout:
-   `snyk code test --json <path-to-lumen-app>` and `snyk test --json <path-to-lumen-app>` (if it has a manifest).
+1. Scan the lumen-app checkout with the wrapper (it loads SNYK_TOKEN from the repo's .env; you never see the token):
+   `../../scripts/snyk-scan.sh /Users/vidyutsriram/lumen-app`
    Exit codes: 0 clean, 1 findings, 2 or 3 error. **Never treat 2 or 3 as clean**; retry once, then report the error.
 2. If there are findings with severity medium or higher:
    - Set the task to `blocked` and post: rule, file:line, severity, one-line fix advice.
