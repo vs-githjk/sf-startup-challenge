@@ -1,0 +1,12 @@
+[project]
+name = "sf-startup-challenge"
+version = "0.1.0"
+description = "SF Startup Challenge 2026 — agent-run startup on Band Desktop + Cognee"
+requires-python = ">=3.12,<3.13"
+# Pin exact versions: the Snyk score counts every vulnerable dependency.
+dependencies = [
+    "cognee==1.6.5",
+]
+
+[tool.uv]
+package = false

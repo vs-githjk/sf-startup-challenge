@@ -1,0 +1,55 @@
+# Team setup (do this first, ~15 min)
+
+Everyone on the team runs through this once. Ask in the team chat if a step fails; don't lose more than 10 minutes on it alone.
+
+## 1. Clone and bootstrap
+
+```sh
+git clone https://github.com/vs-githjk/sf-startup-challenge.git
+cd sf-startup-challenge
+scripts/setup.sh          # checks tools, installs Snyk CLI, uv sync (Cognee), creates .env
+```
+
+Prerequisites: `git`, Node ≥ 20, [`uv`](https://docs.astral.sh/uv/), Docker Desktop (running).
+
+## 2. Band Desktop (mandatory sponsor)
+
+1. Download Band Desktop from **downloads.band.ai** (or band.ai/download) and sign in at app.band.ai.
+2. In the app, use **Install CLI** so `band` / `jam` are on your PATH.
+   - Fallback if the app is not working: `curl -fsSL https://github.com/thenvoi/homebrew-tap/releases/latest/download/jam-installer.sh | sh`
+   - `brew install thenvoi/tap/jam` fails if your Xcode is out of date. Use the fallback above instead.
+3. `band init` (browser sign-in), then `band preflight`. Every row should be green.
+4. Claude Code integration: `jam plugin install`, then restart your Claude Code sessions.
+5. Join the team room (Vidyut shares the link), or pair two agents with `band connect request` / `band connect accept`.
+
+Useful commands: `band ask` (ask the human a question in the room), `band usage` (tokens and $ per agent), `band brief` (restore a peer's context), `band doctor`.
+
+Docs: docs.band.ai/jam
+
+## 3. Cognee (mandatory sponsor, AI memory)
+
+`scripts/setup.sh` installs Cognee 1.6.5 into `.venv`. Fill `LLM_API_KEY` in `.env`, then run:
+
+```sh
+uv run python -c "import cognee; print('ok')"
+```
+
+By default all storage is local (SQLite + LanceDB + Kuzu), so you don't need a server. Neo4j is optional extra credit; its settings are in `.env.example`.
+
+Docs: docs.cognee.ai · github.com/topoteretes/cognee
+
+## 4. Snyk (bonus, but the organizers stress it)
+
+1. Create a free account at snyk.io.
+2. Create a **Personal Access Token**: Account settings → Personal Access Tokens. Put it in `.env` as `SNYK_TOKEN`.
+3. Run `scripts/security-score.sh` to get the same 0–10 score the organizers' scorer gives. Add `--quick` to skip Docker.
+
+How the score works: `10 − (critical×3 + high×1 + medium×0.3 + low×0.1)`. **More than 10 findings above "low" scores 0.** See [AGENTS.md](AGENTS.md) for the rules that keep the score high.
+
+## 5. Flexprice (bonus, billing)
+
+Sign up at docs.flexprice.io (cloud). Create an API key and put it in `.env` as `FLEXPRICE_API_KEY`. The plan defines which meters we create.
+
+## Plan
+
+The idea, PRD, hour-by-hour split and demo script are in [`plan/`](plan/).
