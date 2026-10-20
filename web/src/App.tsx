@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEMO, load, type Snapshot } from "./api";
 import { findConflicts, graphData, type GNode } from "./derive";
-import AsciiField, { type Hud } from "./components/AsciiField";
+import GlyphMosaic from "./components/GlyphMosaic";
+import type { Hud } from "./components/AsciiField";
 import MemoryGraph from "./components/MemoryGraph";
 import { Conflicts, Drafts, Feed, MemoryRows, Panel, Usage } from "./components/Panels";
 
@@ -81,7 +82,7 @@ export default function App() {
       <div className="prism-line" aria-hidden="true"><span /></div>
 
       <section className="hero" aria-label="Overview">
-        <AsciiField nodes={stars} links={conflictLinks} onHud={onHud} />
+        <GlyphMosaic nodes={stars} links={conflictLinks} onHud={onHud} />
         <div className="copy" data-keepout="copy">
           <h1>Promises kept. Stories straight.</h1>
         </div>
