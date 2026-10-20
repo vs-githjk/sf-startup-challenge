@@ -24,14 +24,16 @@ export function computeStats(s: Snapshot): Stats {
   };
 }
 
-export const TOOL_COLORS = { band: "143,180,217", cognee: "180,155,214", flexprice: "134,191,141", snyk: "224,169,59" };
+export const TOOL_COLORS = { prism: "103,232,249", band: "143,180,217", cognee: "180,155,214", flexprice: "134,191,141", snyk: "224,169,59" };
 
 export type Link = { id: keyof typeof TOOL_COLORS; name: string; ok: boolean | null; state: string; fact: string };
 
 // One honest line per tool: connected, not connected, or nothing to show yet. Built only from keep-api data.
-export function connections(s: Snapshot, st: Stats): Link[] {
+export function connections(s: Snapshot, st: Stats, recorded = 0): Link[] {
   const real = s.backend.startsWith("CogneeBackend");
   return [
+    { id: "prism", name: "Prism", ok: recorded > 0 ? true : null, state: recorded > 0 ? "recordings in memory" : "no recording yet",
+      fact: recorded > 0 ? `${recorded} recorded ${recorded === 1 ? "meeting" : "meetings"} pulled through the read-only Prism MCP (Recall.ai bot)` : "Ask the Chief of Staff in Band: pull my latest meeting" },
     { id: "band", name: "Band", ok: st.agents > 0 ? true : null, state: st.agents > 0 ? "agents reporting" : "waiting for agents",
       fact: st.agents > 0 ? `${st.agents} agents on ${st.harnesses} harnesses, ${st.approvals} approvals` : "Open a Band room and @mention an agent" },
     { id: "cognee", name: "Cognee", ok: real, state: real ? "connected" : "offline store",
@@ -39,7 +41,7 @@ export function connections(s: Snapshot, st: Stats): Link[] {
     { id: "flexprice", name: "Flexprice", ok: s.gate.source === "flexprice", state: s.gate.source === "flexprice" ? "connected" : "local wallet",
       fact: `${Math.round(s.balance)} credits left, deep research ${s.gate.allow ? "allowed" : "gated"}` },
     { id: "snyk", name: "Snyk", ok: st.findings > 0 ? true : null, state: st.findings > 0 ? "findings stored" : "no scan yet",
-      fact: st.findings > 0 ? `${st.findings} findings remembered` : "The Security Reviewer stores findings after a scan" },
+      fact: st.findings > 0 ? `${st.findings} ${st.findings === 1 ? "finding" : "findings"} remembered` : "The Security Reviewer stores findings after a scan" },
   ];
 }
 

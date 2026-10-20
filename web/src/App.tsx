@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DEMO, load, type Snapshot } from "./api";
-import { findConflicts, graphData } from "./derive";
+import { conversations, findConflicts, graphData } from "./derive";
+import { Pipeline, steps } from "./components/Pipeline";
 import MemoryGraph from "./components/MemoryGraph";
 import { Conflicts, Drafts, Feed, MemoryRows, Panel } from "./components/Panels";
 import { Connections, CostPanel, computeStats, connections } from "./components/Tools";
@@ -28,6 +29,17 @@ const EMPTY: Snapshot = { mems: [], drafts: [], agents: [], events: [], balance:
 
 export default function App() {
   const { snap, error } = useKeep();
+  // Specular highlight that follows the pointer across a glass panel, as on the reference page.
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const p = (e.target as HTMLElement | null)?.closest?.(".panel") as HTMLElement | null;
+      if (!p) return;
+      const r = p.getBoundingClientRect();
+      p.style.setProperty("--mx", `${e.clientX - r.left}px`); p.style.setProperty("--my", `${e.clientY - r.top}px`);
+    };
+    document.addEventListener("pointermove", move, { passive: true });
+    return () => document.removeEventListener("pointermove", move);
+  }, []);
   const s = snap ?? EMPTY;
   const st = useMemo(() => computeStats(s), [s]);
   const d = useMemo(() => {
@@ -39,7 +51,9 @@ export default function App() {
     };
   }, [s]);
 
-  const links = useMemo(() => connections(s, st), [s, st]);
+  const convos = useMemo(() => conversations(s.mems), [s.mems]);
+  const links = useMemo(() => connections(s, st, convos.filter((c) => c.origin === "prism").length), [s, st, convos]);
+  const flow = useMemo(() => steps(s, st, convos, d.conflicts.length), [s, st, convos, d.conflicts]);
 
   return (
     <>
@@ -58,14 +72,30 @@ export default function App() {
 
       <section className="hero" aria-label="Overview">
         <div className="copy" data-keepout="copy">
-          <h1>Promises kept. Stories straight.</h1>
-          <p className="sub">Agents on Band remember every promise in Cognee, check each message before it goes out, meter their work in Flexprice and have every fix scanned by Snyk.</p>
+          <p className="eyebrow">Live pipeline</p>
+          <h1>Promises kept.<br />Stories straight.</h1>
+          <p className="sub">Live view of the pipeline: recorded call in, checked and approved message out.</p>
         </div>
       </section>
 
       <main id="main">
         <section className="layout" aria-label="What the founder sees">
-          <Panel id="connections" className="wide" title="Connections" count={`${links.filter((l) => l.ok).length} of 4 live`} hint="Each tool the demo depends on, and whether it is answering right now.">
+          <Panel id="flow" className="wide" title="How the data moves" count={`${flow.filter((x) => x.n > 0).length} of ${flow.length} stops active`} hint="One conversation, left to right. Each number is what has passed that stop so far.">
+            <Pipeline items={flow} s={s} st={st} />
+          </Panel>
+          <Panel id="convos" className="wide" title="Recorded and pasted conversations" count={String(convos.length)} hint="Where each memory came from, and what was extracted from it.">
+            <ul className="convos">
+              {convos.length === 0 && <li className="empty">No conversation yet. In Band, ask the Chief of Staff: pull my latest meeting, or paste a transcript.</li>}
+              {convos.map((c) => (
+                <li key={c.source}>
+                  <span className={`origin ${c.origin}`}>{c.origin === "prism" ? "Prism recording" : "Pasted"}</span>
+                  <span className="what">{c.source.replace(/^(prism|pasted):\s*/i, "")}</span>
+                  <span className="got">{[c.promises && `${c.promises} promise${c.promises > 1 ? "s" : ""}`, c.risks && `${c.risks} risk${c.risks > 1 ? "s" : ""}`, c.claims && `${c.claims} claim${c.claims > 1 ? "s" : ""}`, c.other && `${c.other} other`].filter(Boolean).join(", ")}</span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+          <Panel id="connections" className="wide" title="Connections" count={`${links.filter((l) => l.ok).length} of ${links.length} live`} hint="Each tool the demo uses and whether it is answering.">
             <Connections links={links} />
           </Panel>
           <Panel id="promises" title="Promise ledger" count={String(d.promises.length)} hint="Every promise made to investors and customers, from Cognee memory.">
@@ -86,7 +116,7 @@ export default function App() {
           <Panel id="graph" className="graph wide" title="Memory graph" count={`${d.nodes.length} nodes, ${d.links.length} links`} hint="Each hub is a Cognee dataset. Links join a pending draft to the memory that contradicts it.">
             <MemoryGraph nodes={d.nodes} links={d.links} />
           </Panel>
-          <Panel id="events" title="Live activity" className="feed wide" count={String(s.events.length)}>
+          <Panel id="events" title="Handoffs and activity" className="feed wide" count={String(s.events.length)}>
             <Feed events={s.events} />
           </Panel>
         </section>
