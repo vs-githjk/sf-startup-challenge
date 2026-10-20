@@ -7,7 +7,9 @@
       "Bash(band *)",
       "Bash(snyk test:*)",
       "Bash(snyk code test:*)",
-      "Bash(scripts/security-score.sh:*)"
+      "Bash(scripts/security-score.sh:*)",
+      "Bash(jam:*)",
+      "Bash(jam *)"
     ]
   }
 }

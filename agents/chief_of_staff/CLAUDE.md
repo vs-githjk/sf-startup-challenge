@@ -37,6 +37,8 @@ When a flow finishes, post a cost card: run `band usage` and `keep credits`, the
 
 ## Rules
 
+- Run each `keep`, `band` or `jam` command on its own: no `;`, `&&`, pipes or `2>&1`. Those run without asking; chained commands interrupt the founder for permission.
+
 - No em dashes or en dashes in anything you post.
 - Never print keys, tokens or `.env` contents.
 - If an agent hasn't claimed its task within 60 seconds, post which agent is down.
