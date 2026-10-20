@@ -25,7 +25,7 @@ Points = score x weight / 5. Max is 130 with both bonuses.
 | Execution and demo | 20 | 2 | 8.0 | 4 | 16 | UI built and checked in demo mode | Not tested on live keep-api; no end-to-end run; no video |
 | Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction check designed and drawn | Brain never produced a real block |
 | Flexprice | 10 | 3 | 6.0 | 4 | 8 | Setup ran against the real Flexprice account (customer, 3 meters, plan, subscription, wallet); I sent one cost event, flexprice_synced True; gate reads the live wallet | Gate not yet shown denying; no dashboard capture; local and Flexprice balances differ (async) |
-| Snyk | 10 | 2 | 4.0 | 4 | 8 | Snyk Code ran on our repo: 2 low (was 4, then 0) | Dependency result unverified (section 3); reviewer agent never run in Band |
+| Snyk | 10 | 2 | 4.0 | 4 | 8 | Snyk Code ran on our repo: 2 low (was 4, then 0); scan wrapper `scripts/snyk-scan.sh` and `.snyk` (Python 3.12) merged in PR #4 | Dependency result unverified (section 3); reviewer loop never run in Band |
 | **Total** | **130** | | **54.0** | | **106** | | |
 
 History (add a row each checkpoint):
@@ -35,6 +35,7 @@ History (add a row each checkpoint):
 | start of build | 34.0 | 5 | 5 | 12 | 4 | 4 | 2 | 2 | Code and docs only |
 | after UI, path fix, Flexprice merge | 49.0 | 5 | 10 | 12 | 8 | 4 | 6 | 4 | 17 tests pass; nothing live in Band yet |
 | after PR #3 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | 29 tests pass; Cognee in a container; Band still not run |
+| after PR #4 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | Snyk tooling added, no new run, so no change |
 
 ## 2. How the four tools depend on each other
 
@@ -97,7 +98,7 @@ Options to decide (Vidyut and Rishit):
 | Snyk CLI and Snyk Code | Works, token in `.env` |
 | Dependencies | Blocked (above) |
 | Containers | Not done |
-| Reviewer agent in the Band room | Written in `agents/security_reviewer/CLAUDE.md`, never run |
+| Reviewer agent in the Band room | Written, now calls `scripts/snyk-scan.sh` (PR #4), never run in a room |
 | Posts findings, blocks the work item | Designed, needs Band board |
 | Stores recurring issues in Cognee | Designed (`keep remember --dataset eng_security`), never run on real Cognee |
 
