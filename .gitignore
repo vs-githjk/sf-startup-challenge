@@ -48,4 +48,5 @@ outbox/
 outbox/
 
 # local agent worktrees
-.claude/
+/.claude/
+.keep-api.log

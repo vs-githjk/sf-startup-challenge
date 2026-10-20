@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(keep:*)",
+      "Bash(keep *)",
+      "Bash(band:*)",
+      "Bash(band *)",
+      "Bash(snyk test:*)",
+      "Bash(snyk code test:*)",
+      "Bash(scripts/security-score.sh:*)"
+    ]
+  }
+}
