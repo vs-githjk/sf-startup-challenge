@@ -1,7 +1,7 @@
 """Run a PrismKeep LangGraph agent (Listener or Brain) in Band.
 
-    uv run python -m agents.sdk.run listener
-    uv run python -m agents.sdk.run brain
+    uv run --env-file .env python -m agents.sdk.run listener
+    uv run --env-file .env python -m agents.sdk.run brain
 
 Needs: keep-api running (KEEP_URL), ANTHROPIC_API_KEY, and the agent's id and key in
 agent_config.yaml (register at app.band.ai/agents > Connect Agent).
