@@ -5,7 +5,6 @@ import AsciiField, { type Hud } from "./components/AsciiField";
 import MemoryGraph from "./components/MemoryGraph";
 import { Conflicts, Drafts, Feed, MemoryRows, Panel, Usage } from "./components/Panels";
 
-const pad = (n: number) => String(n).padStart(2, "0");
 const PROBE = (n: Omit<GNode, "x" | "y" | "vx" | "vy">): GNode => ({ ...n, x: 0, y: 0, vx: 0, vy: 0 });
 
 function useKeep() {
@@ -57,8 +56,8 @@ export default function App() {
   // The readout ticks at about 11 Hz, so it is written to the DOM instead of through React state.
   const onHud = (h: Hud) => {
     const r = hudRef.current;
-    if (r.state) { r.state.textContent = h.locked ? "LOCKED" : "SLEWING"; r.state.className = h.locked ? "on" : ""; }
-    if (r.track) r.track.textContent = pad(h.tracked);
+    if (r.state) { r.state.textContent = h.state; r.state.parentElement!.className = h.state === "locked" ? "state on" : "state"; }
+    if (r.track) r.track.textContent = String(h.tracked);
     if (r.top) r.top.textContent = h.top;
   };
 
@@ -66,6 +65,7 @@ export default function App() {
   const d = derived;
   return (
     <>
+      <a className="skip" href="#main">Skip to content</a>
       <header className="bar">
         <div className="brand">
           <svg className="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 27H3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><path d="M16 3v24" stroke="currentColor" strokeWidth="1.2" opacity=".55" /></svg>
@@ -75,27 +75,26 @@ export default function App() {
         <div className="status" role="status" aria-live="polite">
           <span className={`live ${snap ? (ok ? "on" : "off") : ""}`} aria-hidden="true" />
           <span>{error ? `keep-api offline (${error})` : snap ? (DEMO ? "demo" : "keep-api live") : "connecting"}</span>
-          <span className="credits">{snap ? `${Math.round(snap.balance)} credits` : "credits ..."}</span>
+          <span className="credits">{snap ? `${Math.round(snap.balance)} credits` : error ? "Credits unavailable" : "Credits …"}</span>
         </div>
       </header>
       <div className="prism-line" aria-hidden="true"><span /></div>
 
-      <section className="hero" aria-label="PrismKeep">
+      <section className="hero" aria-label="Overview">
         <AsciiField nodes={stars} links={conflictLinks} onHud={onHud} />
-        <div className="copy">
-          <p className="eyebrow">Memory for every promise you make</p>
-          <h1>Promises kept.<br /><span>Stories straight.</span></h1>
+        <div className="copy" data-keepout="copy">
+          <h1>Promises kept. Stories straight.</h1>
         </div>
-        <div className="telemetry mono" aria-hidden="true">
-          <span>[ WORKSPACE / LUMEN ANALYTICS ]</span>
-          <span>[ RECALL <b ref={(e) => { hudRef.current.state = e; }}>SLEWING</b> ]</span>
-          <span>[ TRACKED <b ref={(e) => { hudRef.current.track = e; }}>00</b> ]</span>
-          <span className="top">[ TOP <b ref={(e) => { hudRef.current.top = e; }}>NONE</b> ]</span>
-          <span>[ PROMISES <b>{pad(d?.promises.length ?? 0)}</b> ]</span>
-          <span>[ CONFLICTS <b>{pad(d?.conflicts.length ?? 0)}</b> ]</span>
-          <span>[ <i className="rec" /> <b>{clock}</b> ]</span>
+        <div className="telemetry" data-keepout aria-hidden="true">
+          <span>Workspace <b>Lumen Analytics</b></span>
+          <span className="state">Recall <b ref={(e) => { hudRef.current.state = e; }}>idle</b></span>
+          <span>Tracked <b ref={(e) => { hudRef.current.track = e; }}>0</b></span>
+          <span className="top">Top match <b ref={(e) => { hudRef.current.top = e; }}>none</b></span>
+          <span>Promises <b>{d?.promises.length ?? 0}</b></span>
+          <span>Conflicts <b>{d?.conflicts.length ?? 0}</b></span>
+          <span><i className="rec" /> <b>{clock}</b></span>
         </div>
-        <p className="hint-tag mono" aria-hidden="true">Move to slew. Hold still to recall.</p>
+        <p className="hint-tag" data-keepout aria-hidden="true">Move the cursor to scan. Hold still to recall.</p>
       </section>
 
       <section className="stats" aria-label="Summary">
@@ -105,7 +104,7 @@ export default function App() {
         <div className="stat"><b>{d?.pending ?? 0}</b><span>awaiting you</span></div>
       </section>
 
-      <main className="layout">
+      <main className="layout" id="main">
         <div className="col">
           <Panel id="promises" title="Promise ledger" count={String(d?.promises.length ?? 0)} hint="Every promise made to investors and customers, from Cognee memory.">
             <MemoryRows mems={d?.promises ?? []} empty={snap ? "No promises yet. Paste a conversation into Band and the Listener will log them here." : "Waiting for keep-api. Start it with: KEEP_BACKEND=local uv run python -m keep.api"} />
