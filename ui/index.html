@@ -4,39 +4,95 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PrismKeep</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- STARTER for the UI/UX role. No build step and no npm on purpose (keeps the Snyk score clean).
-       Served by keep-api at http://127.0.0.1:8787/ . Data comes from keep-api JSON endpoints. -->
+  <!-- Evidence Room: ledger noir. No build step and no npm on purpose (keeps the Snyk score clean).
+       Served by keep-api at http://127.0.0.1:8787/ . Add ?demo=1 to preview with synthetic data. -->
   <header class="bar">
-    <div class="brand">PrismKeep</div>
-    <div class="credits" id="credits">credits …</div>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 27H3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M16 3v24" stroke="currentColor" stroke-width="1.2" opacity=".55"/></svg>
+      <span class="word">PrismKeep</span>
+      <span class="tag" id="tag">synthetic data</span>
+    </div>
+    <div class="status" role="status" aria-live="polite">
+      <span class="live" id="live" aria-hidden="true"></span>
+      <span id="conn">connecting</span>
+      <span class="credits" id="credits">credits ...</span>
+    </div>
   </header>
-  <main class="grid">
-    <section class="card" aria-labelledby="h-promises">
-      <h2 id="h-promises">Promise ledger</h2>
-      <p class="hint">Every promise made to investors and customers, from Cognee memory.</p>
-      <ul id="promises" class="list"></ul>
+  <div class="prism-line" aria-hidden="true"><span></span></div>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><b id="s-promises" data-v="0">0</b><span>open promises</span></div>
+    <div class="stat"><b id="s-risks" data-v="0">0</b><span>risks on record</span></div>
+    <div class="stat warn"><b id="s-blocks" data-v="0">0</b><span>claims in conflict</span></div>
+    <div class="stat"><b id="s-pending" data-v="0">0</b><span>awaiting you</span></div>
+  </section>
+
+  <main class="layout">
+    <div class="col">
+      <section class="panel" aria-labelledby="h-promises">
+        <header><h2 id="h-promises">Promise ledger</h2><span class="count" id="c-promises"></span></header>
+        <p class="hint">Every promise made to investors and customers, from Cognee memory.</p>
+        <ol id="promises" class="rows"></ol>
+      </section>
+
+      <section class="panel conflict" aria-labelledby="h-conflict">
+        <header><h2 id="h-conflict">Contradiction check</h2><span class="count" id="c-conflict"></span></header>
+        <p class="hint">What a draft says, set against what your other conversations say.</p>
+        <ol id="conflicts" class="rows"></ol>
+      </section>
+
+      <section class="panel" aria-labelledby="h-risks">
+        <header><h2 id="h-risks">Risks and claims</h2><span class="count" id="c-risks"></span></header>
+        <p class="hint">Facts that could contradict an outbound message.</p>
+        <ol id="risks" class="rows"></ol>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-labelledby="h-drafts">
+        <header><h2 id="h-drafts">Approval queue</h2><span class="count" id="c-drafts"></span></header>
+        <p class="hint">Nothing leaves until you approve in Band. The hash proves what was approved.</p>
+        <ol id="drafts" class="rows"></ol>
+      </section>
+
+      <section class="panel" aria-labelledby="h-usage">
+        <header><h2 id="h-usage">Agent cost and credits</h2><span class="count" id="c-usage"></span></header>
+        <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+        <p class="hint" id="meter-label">credits</p>
+        <ol id="usage" class="rows"></ol>
+        <div class="gate" id="gate"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-sec">
+        <header><h2 id="h-sec">Security</h2><span class="count" id="c-sec"></span></header>
+        <p class="hint">Snyk findings the Security Reviewer stored. Repeat findings are remembered.</p>
+        <ol id="security" class="rows"></ol>
+      </section>
+    </div>
+
+    <section class="panel graph" aria-labelledby="h-graph">
+      <header><h2 id="h-graph">Memory graph</h2><span class="count" id="c-graph"></span></header>
+      <p class="hint">Each hub is a Cognee dataset. Red links join a pending draft to the memory that contradicts it.</p>
+      <div class="stage" id="stage">
+        <svg id="graph" viewBox="0 0 1000 380" role="img" aria-label="Knowledge graph of memories, datasets and drafts"></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <ul class="legend" aria-hidden="true">
+        <li><i class="k hub"></i>dataset</li><li><i class="k promise"></i>promise</li><li><i class="k risk"></i>risk</li>
+        <li><i class="k claim"></i>claim</li><li><i class="k finding"></i>finding</li><li><i class="k draft"></i>pending draft</li>
+      </ul>
     </section>
-    <section class="card" aria-labelledby="h-risks">
-      <h2 id="h-risks">Risks and claims</h2>
-      <p class="hint">What could contradict an outbound message.</p>
-      <ul id="risks" class="list"></ul>
-    </section>
-    <section class="card" aria-labelledby="h-drafts">
-      <h2 id="h-drafts">Approval queue</h2>
-      <p class="hint">Drafts waiting for the founder. Approve in Band; this view shows status and hash.</p>
-      <ul id="drafts" class="list"></ul>
-    </section>
-    <section class="card" aria-labelledby="h-usage">
-      <h2 id="h-usage">Agent cost</h2>
-      <p class="hint">Tokens, tasks and dollars per agent, metered to Flexprice.</p>
-      <ul id="usage" class="list"></ul>
-    </section>
-    <section class="card wide" aria-labelledby="h-events">
-      <h2 id="h-events">Live activity</h2>
-      <ol id="events" class="list mono"></ol>
+
+    <section class="panel feed" aria-labelledby="h-events">
+      <header><h2 id="h-events">Live activity</h2><span class="count" id="c-events"></span></header>
+      <ol id="events" class="rows mono" aria-live="off"></ol>
     </section>
   </main>
   <script src="app.js"></script>

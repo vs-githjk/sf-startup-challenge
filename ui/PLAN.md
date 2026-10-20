@@ -29,6 +29,7 @@ flowchart LR
 | Approval queue | `GET /drafts`, `POST /drafts/{id}/approve` status and hash | Draft text, evidence per claim, pending or approved, sha256 | Band 25 (human decision) |
 | Agent cost and credits | `GET /usage`, `GET /credits`, `GET /gate/{feature}` | Tokens, tasks, dollars per agent, wallet balance, gated features | Flexprice +10, Band 25 (cost view) |
 | Live activity | `GET /events` | Every memory event, cost event and block, newest first | Execution 20 |
+| Memory graph (added) | `GET /memories`, `GET /drafts` | Datasets as hubs, memories as nodes, red links for draft vs contradicting memory; dependency free SVG force layout | Cognee 25, Innovation 10 |
 | Security panel (add) | scan results stored under `eng_security` | Last scan time, findings, blocked tasks, repeat count, repo score | Snyk +10 |
 
 ## 2. Founder flow through the UI
