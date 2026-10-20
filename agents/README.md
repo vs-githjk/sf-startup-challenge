@@ -4,7 +4,7 @@ Six agents built with three tools, in two Band rooms. Every agent reads and writ
 
 | Agent | Built with | Room | Instructions | How to start it |
 |---|---|---|---|---|
-| Chief of Staff | Claude Code (attached) | HQ, Eng | `chief_of_staff/CLAUDE.md` | Open Claude Code in `agents/chief_of_staff/`, then `/jam as architect` |
+| Chief of Staff | Claude Code (owned by Band Desktop) | HQ, Eng | `chief_of_staff/CLAUDE.md` | Open Claude Code in `agents/chief_of_staff/`, then `/jam as architect` |
 | Drafter | Codex | HQ | `drafter/AGENTS.md` | Band Desktop › New agent › Codex, working dir `agents/drafter/` |
 | Fixer | Codex | Eng | `fixer/AGENTS.md` | Band Desktop › New agent › Codex, working dir is the `lumen-app` checkout |
 | Security Reviewer | Claude Code + Snyk | Eng, HQ | `security_reviewer/CLAUDE.md` | Claude Code in `agents/security_reviewer/`, then `/jam as security-reviewer` |

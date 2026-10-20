@@ -1,3 +1,5 @@
+> **Historical checkpoint log, not current status.** For results from the final run, see the README's "Results from today's run".
+
 # Scoring: where we stand and how the four tools earn points
 
 One page for the whole team. Update it at every checkpoint (11:50, 12:30, 13:15, 13:45, 14:00). Rule: a number goes in only if a real run produced it.
