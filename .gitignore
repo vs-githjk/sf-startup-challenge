@@ -35,3 +35,10 @@ reports/
 .DS_Store
 .vscode/
 .idea/
+
+# band agent credentials
+agent_config.yaml
+*.agent.yaml
+# outbox and local keep data
+.keep/
+outbox/
