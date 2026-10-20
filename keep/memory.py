@@ -16,7 +16,7 @@ def tokens(s: str) -> set[str]:
 class MemoryBackend(Protocol):
     async def remember(self, dataset: str, text: str) -> str | None: ...
     async def recall(self, datasets: list[str], query: str, top: int) -> list[dict]: ...
-    async def forget(self, cognee_data_id: str | None) -> None: ...
+    async def forget(self, cognee_data_id: str | None, dataset: str) -> None: ...
     async def improve(self, dataset: str, feedback: str) -> None: ...
 
 
@@ -40,7 +40,7 @@ class LocalBackend:
         out.sort(key=lambda r: (-r["score"], r["data_id"]))
         return out[:top]
 
-    async def forget(self, cognee_data_id):
+    async def forget(self, cognee_data_id, dataset):
         return None
 
     async def improve(self, dataset, feedback):
@@ -74,7 +74,8 @@ class CogneeBackend:
 
     async def recall(self, datasets, query, top):
         import cognee
-        raw = await cognee.recall(query, datasets=datasets, top_k=top)
+        # stored facts, not an LLM answer: keeps data_id/kind and lets forgotten facts be filtered
+        raw = await cognee.recall(query, cognee.SearchType.CHUNKS, datasets=datasets, top_k=top)
         out = []
         for i, r in enumerate(raw or []):
             if hasattr(r, "model_dump"):
@@ -88,10 +89,10 @@ class CogneeBackend:
                             "kind": None})
         return out
 
-    async def forget(self, cognee_data_id):
+    async def forget(self, cognee_data_id, dataset):
         if cognee_data_id:
             import cognee
-            await cognee.forget(data_id=UUID(cognee_data_id))
+            await cognee.forget(data_id=UUID(cognee_data_id), dataset=dataset)
 
     async def improve(self, dataset, feedback):
         import cognee

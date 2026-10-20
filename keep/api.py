@@ -113,22 +113,20 @@ def create_app() -> FastAPI:
             if not re.match(DATASET, d):
                 raise HTTPException(422, "bad dataset name")
         try:
-            raw = await backend.recall(b.datasets, b.query, b.top)
+            # headroom: Cognee's dataset filter leaks other datasets when access control is off
+            raw = await backend.recall(b.datasets, b.query, b.top * 4)
         except Exception as exc:
             log.warning("recall failed: %s", type(exc).__name__)
             raise HTTPException(502, "memory backend failed") from exc
         live = [m for ds in b.datasets for m in store.memories(dataset=ds)]
-        dead = [m for ds in b.datasets for m in store.memories(dataset=ds, include_forgotten=True)
-                if m["forgotten_at"]]
-        results = []
+        results, seen = [], set()
         for r in raw:
+            # ponytail: the ledger is the scope; drops other datasets, forgotten facts and dupes
             hit = next((m for m in live if m["id"] == r["data_id"] or m["text"] in r["text"]
                         or r["text"] in m["text"]), None)
-            if hit is None and any(m["text"] in r["text"] or r["text"] in m["text"] for m in dead):
-                continue  # forgotten: never return it
-            if hit:
-                r = {**r, "data_id": hit["id"], "kind": hit["kind"], "dataset": hit["dataset"]}
-            results.append(r)
+            if hit and hit["id"] not in seen:
+                seen.add(hit["id"])
+                results.append({**r, "data_id": hit["id"], "kind": hit["kind"], "dataset": hit["dataset"]})
         store.event("recall", "", {"datasets": b.datasets, "query": b.query[:200], "n": len(results)})
         return {"results": results[: b.top]}
 
@@ -139,7 +137,7 @@ def create_app() -> FastAPI:
             raise HTTPException(404, "unknown data_id")
         store.mark_forgotten(m["id"])
         try:
-            await backend.forget(m["cognee_data_id"])
+            await backend.forget(m["cognee_data_id"], m["dataset"])
         except Exception as exc:  # ledger already hides it from recall
             log.warning("backend forget failed: %s", type(exc).__name__)
         store.event("forget", "", {"data_id": m["id"], "dataset": m["dataset"]})

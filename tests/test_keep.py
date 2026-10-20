@@ -39,6 +39,36 @@ def test_forget_removes_from_recall(client):
     assert client.get("/memories").json()["memories"] == []
 
 
+def test_recall_scopes_by_ledger_when_backend_leaks(tmp_path, monkeypatch):
+    """Cognee with access control off returns chunks from every dataset, without ids."""
+    import keep.api
+
+    class Leaky:
+        def __init__(self, store):
+            self.store = store
+
+        async def remember(self, dataset, text):
+            return None
+
+        async def recall(self, datasets, query, top):
+            rows = self.store.memories(include_forgotten=True)
+            return [{"text": m["text"], "dataset": datasets[0], "data_id": None, "score": 1.0,
+                     "kind": None} for m in rows + rows]
+
+        async def forget(self, cognee_data_id, dataset):
+            return None
+
+    monkeypatch.setattr(keep.api, "make_backend", Leaky)
+    monkeypatch.setenv("KEEP_DATA_DIR", str(tmp_path / "data"))
+    c = TestClient(create_app())
+    keep_id = remember(c, "Northline promise: Q3 retention by Oct 24", ds="rel_northline")
+    gone = remember(c, "Northline promise: deck by Oct 20", ds="rel_northline")
+    remember(c, "Acme will evaluate a competitor", ds="rel_acme", kind="risk")
+    c.post("/forget", json={"data_id": gone})
+    hits = c.post("/recall", json={"datasets": ["rel_northline"], "query": "promise"}).json()["results"]
+    assert [(h["data_id"], h["dataset"], h["kind"]) for h in hits] == [(keep_id, "rel_northline", "promise")]
+
+
 def draft(c, body="Hi Sarah, SOC2 is on track."):
     return c.post("/drafts", json={"to_name": "Sarah", "subject": "Update", "body": body}).json()["id"]
 
