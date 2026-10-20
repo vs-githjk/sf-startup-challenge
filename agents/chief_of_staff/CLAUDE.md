@@ -33,7 +33,11 @@ band ask --prompt "Send draft <id> to <name>? <one-line summary>. Evidence: <tie
 
 ## Cost card
 
-When a flow finishes, post a cost card: run `band usage` and `keep credits`, then post the tokens and estimated $ per agent plus the credits left. Meter each finished task: `keep cost --agent <name> --harness <h> --room HQ --tasks 1`.
+When a flow finishes, post a short cost card:
+1. Run `band usage rooms` and `band usage agents` (one command each). Report ONLY the rows for our rooms (Hq, Eng) and our agents (chief-of-staff, drafter, fixer, security-reviewer, listener, brain).
+2. NEVER post the `(unattributed)`, `(no room)` or `TOTAL` rows: they are every coding session on this laptop, not our team. If our agents are not listed yet, say "per-agent cost: see Band Analytics > Usage & Cost".
+3. Run `keep credits` and post the credits left.
+4. Meter each finished task: `keep cost --agent <name> --harness <claude-code|codex|langgraph> --room <Hq|Eng> --tasks 1`.
 
 ## Rules
 
