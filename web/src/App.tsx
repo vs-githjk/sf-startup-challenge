@@ -41,7 +41,6 @@ export default function App() {
     return () => document.removeEventListener("pointermove", move);
   }, []);
   const s = snap ?? EMPTY;
-  const [view, setView] = useState<"work" | "overview">("work");
   const st = useMemo(() => computeStats(s), [s]);
   const d = useMemo(() => {
     const conflicts = findConflicts(s.drafts, s.mems, s.events);
@@ -63,15 +62,11 @@ export default function App() {
         <div className="brand">
           <svg className="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 27H3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><path d="M16 3v24" stroke="currentColor" strokeWidth="1.2" opacity=".55" /></svg>
           <span className="word">PrismKeep</span>
-          <span className="tag">{DEMO ? "Sample data, demo mode" : "Synthetic data"}</span>
-        </div>
-        <div className="views" role="group" aria-label="View">
-          <button aria-pressed={view === "work"} onClick={() => setView("work")}>Workspace</button>
-          <button aria-pressed={view === "overview"} onClick={() => setView("overview")}>Overview</button>
+          <span className="tag">{DEMO ? "demo preview, synthetic data" : "synthetic data"}</span>
         </div>
         <div className="status" role="status" aria-live="polite">
           <span className={`live ${snap ? (error ? "off" : "on") : ""}`} aria-hidden="true" />
-          <span>{error ? `Memory offline: ${error}` : snap ? (DEMO ? "Demo" : "Memory connected") : "Connecting"}</span>
+          <span>{error ? `keep-api offline (${error})` : snap ? (DEMO ? "demo" : "keep-api live") : "connecting"}</span>
         </div>
       </header>
 
