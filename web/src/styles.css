@@ -216,3 +216,21 @@ h2, .subject { font-family: var(--body); letter-spacing: -.02em; }
 #graph .hub { fill: #fff; }
 #graph .finding, .legend .k.finding { fill: #92400E; background: #92400E; }
 .tip { background: #0E1726; color: #F6F9FC; border-color: transparent; }
+
+/* ---- simplified page: connections list and cost panel ---- */
+.links { list-style: none; margin: 0; padding: 0; display: grid; }
+.links li { display: grid; grid-template-columns: 14px 110px 150px 1fr; gap: 12px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--line); }
+.links li:first-child { border-top: 0; }
+.links b { font-weight: 600; } .links em { font: 400 12px var(--mono); color: var(--muted); font-style: normal; }
+.links .fact { color: var(--muted); font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); align-self: center; }
+.dot.ok { background: var(--ok); } .dot.off { background: var(--bad); } .dot.idle { background: #D4A017; }
+.agents { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.agents li { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 14px; padding-bottom: 8px; }
+.agents em { font: 400 12px var(--mono); color: var(--muted); font-style: normal; }
+.agents i { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--brass); transform-origin: left; border-radius: 99px; }
+.agents .none { color: var(--muted); font: italic 400 16px var(--display); }
+@media (max-width: 700px) { .links li { grid-template-columns: 14px 1fr; } .links em, .links .fact { grid-column: 2; } }
+.hero { display: block; min-height: clamp(340px, 42vh, 440px); }
+.hero .copy { max-width: 640px; }
+.hero .sub { color: #C9C9D3; text-shadow: 0 1px 12px rgba(7, 7, 10, .8); }

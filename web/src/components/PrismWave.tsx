@@ -9,7 +9,7 @@ uniform vec2 res;
 uniform float t;
 void main() {
   vec2 p = (gl_FragCoord.xy * 2.0 - res) / min(res.x, res.y);
-  p.y += 0.5;
+  p.y += 0.85;
   float d = length(p) * 0.05;
   float rx = p.x * (1.0 + d), gx = p.x, bx = p.x * (1.0 - d);
   float r = 0.05 / abs(p.y + sin((rx + t) * 1.0) * 0.5);

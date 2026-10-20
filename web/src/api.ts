@@ -3,7 +3,7 @@ export type Memory = { id: string; dataset: string; kind: string; text: string; 
 export type Draft = { id: string; to_name: string; subject: string; body: string; status: string; approved_sha256?: string | null };
 export type Agent = { agent: string; harness?: string; tokens_in: number; tokens_out: number; tasks: number; usd?: number | null };
 export type Ev = { id: number; ts: string; type: string; agent?: string; payload?: Record<string, unknown> };
-export type Gate = { feature: string; allow: boolean; cost?: number; balance?: number };
+export type Gate = { feature: string; allow: boolean; cost?: number; balance?: number; source?: string };
 export type Snapshot = { mems: Memory[]; drafts: Draft[]; agents: Agent[]; events: Ev[]; balance: number; start: number; gate: Gate; backend: string };
 
 export const DEMO = new URLSearchParams(location.search).has("demo");
