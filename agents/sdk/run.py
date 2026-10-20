@@ -12,9 +12,14 @@ import os
 import sys
 from pathlib import Path
 
+import certifi
 import httpx
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
+
+# python.org builds on macOS ship without root certificates, so Band's WebSocket fails with
+# CERTIFICATE_VERIFY_FAILED. Point Python at certifi's bundle unless the caller set one.
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
 from band import Agent, Capability, Emit
 from band.adapters import LangGraphAdapter
