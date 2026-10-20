@@ -11,7 +11,7 @@ Our repo is scored 0–10 by `snyk test --all-projects` (dependencies) and `snyk
 3. **No `eval`, `exec`, `shell=True`, `pickle` on untrusted data, or string-built SQL.** Use parameterized queries and argument lists for subprocesses.
 4. **Treat LLM and transcript text as untrusted input.** Escape it before rendering as HTML. Never pass it to a shell, a file path or a SQL string.
 5. **Validate inputs at the API edge** (type, length, allowed values). Set request size limits.
-6. **Before moving a work item to Done**, run `scripts/security-score.sh --quick`. Don't move it if it added any high or critical finding. The security-reviewer agent blocks the item until the finding is fixed.
+6. **Before moving a work item that changes code in this repo to Done**, run `scripts/security-score.sh --quick`. Don't move it if it added any high or critical finding. The security-reviewer agent blocks the item until the finding is fixed. Tasks that change no code (memory lookups, drafts, messages) skip this check.
 7. If Snyk flags a vulnerable dependency, upgrade to the fixed version it suggests. If no fix exists, remove the dependency.
 
 ## Workflow
