@@ -31,6 +31,33 @@ def send_event(event_name: str, customer_id: str, properties: dict) -> bool:
         return False
 
 
+def remote_balance(customer_id: str, client: httpx.Client | None = None) -> float | None:
+    """Real-time credit balance of the customer's Flexprice wallet, or None if unavailable."""
+    if client is None:
+        key = os.environ.get("FLEXPRICE_API_KEY")
+        if not key:
+            return None
+        base = os.environ.get("FLEXPRICE_BASE_URL", "https://us.api.flexprice.io/v1").rstrip("/")
+        client = httpx.Client(base_url=base, headers={"x-api-key": key}, timeout=3.0)
+    try:
+        with client:
+            r = client.get(f"/customers/external/{customer_id}")
+            r.raise_for_status()
+            r = client.get(f"/customers/{r.json()['id']}/wallets")
+            r.raise_for_status()
+            data = r.json()
+            wallets = data if isinstance(data, list) else data.get("items") or []
+            if not wallets:
+                return None
+            # only this endpoint subtracts the current period's unbilled usage
+            r = client.get(f"/wallets/{wallets[0]['id']}/balance/real-time")
+            r.raise_for_status()
+            return float(r.json()["real_time_credit_balance"])
+    except Exception as exc:  # the gate must still answer when Flexprice is down
+        log.warning("flexprice_balance=unavailable err=%s", type(exc).__name__)
+        return None
+
+
 def token_credits(tokens_in: int, tokens_out: int) -> float:
     """1 credit per 1000 tokens."""
     return (tokens_in + tokens_out) / 1000.0
@@ -55,9 +82,14 @@ class Wallet:
         return self.balance()
 
     def gate(self, feature: str) -> dict:
+        """Flexprice wallet is the source of truth; the local wallet covers outages."""
         cost = FEATURE_COST.get(feature, ACTION_COST.get(feature))
-        bal = self.balance()
+        bal = remote_balance(os.environ.get("FLEXPRICE_CUSTOMER_ID", "lumen"))
+        source = "flexprice"
+        if bal is None:
+            bal, source = self.balance(), "local"
         if cost is None:
             return {"feature": feature, "allow": False, "reason": "unknown feature",
-                    "cost": 0, "balance": bal}
-        return {"feature": feature, "allow": bal >= cost, "cost": cost, "balance": bal}
+                    "cost": 0, "balance": bal, "source": source}
+        return {"feature": feature, "allow": bal >= cost, "cost": cost, "balance": bal,
+                "source": source}
