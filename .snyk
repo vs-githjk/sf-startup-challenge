@@ -1,0 +1,7 @@
+# Snyk policy. Our dependencies are pinned for Python 3.12 (see .python-version and requirements.txt);
+# without this, Snyk's SCM import assumes Python 3.7 and resolves older, vulnerable versions.
+version: v1.25.0
+ignore: {}
+patch: {}
+language-settings:
+  python: '3.12'

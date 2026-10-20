@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(keep:*)",
+      "Bash(keep *)",
+      "Bash(band:*)",
+      "Bash(band *)",
+      "Bash(snyk test:*)",
+      "Bash(snyk code test:*)",
+      "Bash(scripts/security-score.sh:*)",
+      "Bash(jam:*)",
+      "Bash(jam *)",
+      "Bash(../../scripts/snyk-scan.sh:*)",
+      "Bash(/Users/vidyutsriram/SF Startup Challenge/scripts/snyk-scan.sh:*)",
+      "Bash(../../scripts/security-score.sh:*)"
+    ]
+  }
+}
