@@ -1,4 +1,5 @@
 """Memory backends: Cognee (real) and Local (keyword overlap, no LLM needed)."""
+import hashlib
 import os
 import re
 from typing import Protocol
@@ -16,9 +17,10 @@ def tokens(s: str) -> set[str]:
 
 class MemoryBackend(Protocol):
     async def remember(self, dataset: str, text: str) -> str | None: ...
-    async def recall(self, datasets: list[str], query: str, top: int) -> list[dict]: ...
-    async def forget(self, cognee_data_id: str | None, dataset: str | None = None) -> None: ...
-    async def improve(self, dataset: str, feedback: str) -> None: ...
+    async def recall(self, datasets: list[str], query: str, top: int) -> list[dict]:
+        """Hits as {text, data_id, score}; data_id is a ledger id or a Cognee data id."""
+    async def forget(self, cognee_data_id: str | None, dataset: str) -> None: ...
+    async def improve(self, dataset: str, feedback: str) -> list[dict]: ...
 
 
 class LocalBackend:
@@ -41,15 +43,15 @@ class LocalBackend:
         out.sort(key=lambda r: (-r["score"], r["data_id"]))
         return out[:top]
 
-    async def forget(self, cognee_data_id, dataset=None):
+    async def forget(self, cognee_data_id, dataset):
         return None
 
     async def improve(self, dataset, feedback):
-        return None
+        return []
 
 
 class CogneeBackend:
-    """httpx client for the Cognee REST server (separate container, see docker-compose.yml).
+    """httpx client for the Cognee REST server (its own container, see docker-compose.yml).
 
     Cognee runs with ENABLE_BACKEND_ACCESS_CONTROL=false, so its endpoints need no token and
     every call acts as its single default user. It is bound to 127.0.0.1 only.
@@ -70,28 +72,26 @@ class CogneeBackend:
         async with self._client() as c:
             r = await c.post("/api/v1/remember", files=[(k, (None, v)) for k, v in form])
             r.raise_for_status()
-            for item in r.json().get("items") or []:
-                if isinstance(item, dict) and item.get("id"):
-                    return str(item["id"])
-            return await self._newest_data_id(c, dataset)
-
-    @staticmethod
-    async def _newest_data_id(c: httpx.AsyncClient, dataset: str) -> str | None:
-        r = await c.get("/api/v1/datasets")
-        r.raise_for_status()
-        for ds in r.json():
-            if ds.get("name") == dataset:
-                d = await c.get(f"/api/v1/datasets/{ds['id']}/data")
-                d.raise_for_status()
-                rows = d.json()
-                if rows:
-                    key = lambda x: str(x.get("createdAt") or x.get("created_at") or "")  # noqa: E731
-                    return str(max(rows, key=key)["id"])
-        return None
+            # The run's item list holds other items of the dataset too; find ours by the name
+            # Cognee gives a text item: "text_<md5 of the utf-8 text>.txt".
+            name = "text_" + hashlib.md5(text.encode("utf-8")).hexdigest() + ".txt"
+            r = await c.get("/api/v1/datasets")
+            r.raise_for_status()
+            for ds in r.json():
+                if ds.get("name") == dataset:
+                    d = await c.get(f"/api/v1/datasets/{ds['id']}/data", params={"limit": 1000})
+                    d.raise_for_status()
+                    for row in d.json():
+                        if row.get("name") == name:
+                            return str(row["id"])
+        raise LookupError("remembered text not found in its Cognee dataset")
 
     async def recall(self, datasets, query, top):
+        # Stored chunks, not an LLM answer, each tagged with the Cognee data id it came from.
+        # Access control is off, so Cognee keeps one shared store and its dataset filter leaks
+        # (and errors on unknown names): search all of it, keep-api scopes hits by its ledger.
         async with self._client() as c:
-            r = await c.post("/api/v1/recall", json={"query": query, "datasets": datasets,
+            r = await c.post("/api/v1/recall", json={"query": query, "searchType": "CHUNKS",
                                                      "topK": top})
             r.raise_for_status()
             raw = r.json()
@@ -100,22 +100,24 @@ class CogneeBackend:
             d = d if isinstance(d, dict) else {"text": str(d)}
             text = next((str(d[f]) for f in TEXT_FIELDS if d.get(f)), "")
             if text:
-                ds = d.get("dataset_name") or d.get("datasetName") or datasets[0]
-                out.append({"text": text, "dataset": ds, "data_id": None,
-                            "score": float(d.get("score") or 1.0 / (i + 1)), "kind": None})
+                out.append({"text": text, "data_id": (d.get("metadata") or {}).get("data_id"),
+                            "score": float(d.get("score") or 1.0 / (i + 1))})
         return out
 
-    async def forget(self, cognee_data_id, dataset=None):
-        if not (cognee_data_id and dataset):
-            return
-        async with self._client() as c:
-            r = await c.post("/api/v1/forget", json={"dataId": cognee_data_id, "dataset": dataset})
-            r.raise_for_status()
+    async def forget(self, cognee_data_id, dataset):
+        if cognee_data_id:
+            async with self._client() as c:
+                r = await c.post("/api/v1/forget", json={"dataId": cognee_data_id, "dataset": dataset})
+                r.raise_for_status()
 
     async def improve(self, dataset, feedback):
+        # Without session ids every default stage skips; conflict review is the one that reads the graph.
         async with self._client() as c:
-            r = await c.post("/api/v1/improve", json={"datasetName": dataset})
+            r = await c.post("/api/v1/improve", json={"datasetName": dataset, "reviewConflicts": True})
             r.raise_for_status()
+            stages = r.json().get("stages") or []
+        return [{"stage": st.get("stage"), "status": st.get("status"), "reason": st.get("reason"),
+                 "counts": st.get("counts") or {}} for st in stages]
 
 
 def make_backend(store: Store) -> MemoryBackend:

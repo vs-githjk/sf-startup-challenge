@@ -7,3 +7,12 @@ An AI-native startup run by a team of agents: **Band Desktop** coordinates them,
 - **New teammate?** Start with [SETUP.md](SETUP.md).
 - **Working rules (security first):** [AGENTS.md](AGENTS.md)
 - **Challenge brief and rubric:** [plan/challenge.md](plan/challenge.md)
+
+## Run memory
+
+Cognee runs as a pinned container, not as a Python dependency (see [docs/security.md](docs/security.md)):
+
+```sh
+docker compose up -d neo4j cognee
+KEEP_BACKEND=cognee uv run python -m keep.api
+```
