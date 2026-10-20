@@ -98,8 +98,6 @@ Options to decide (Vidyut and Rishit):
 | Reviewer agent in the Band room | Written in `agents/security_reviewer/CLAUDE.md`, never run |
 | Posts findings, blocks the work item | Designed, needs Band board |
 | Stores recurring issues in Cognee | Designed (`keep remember --dataset eng_security`), never run on real Cognee |
-| Vulnerable demo app | `lumen-app` not created yet |
-| Review helper | `scripts/snyk_review.py` not written yet |
 
 ### Using Snyk beyond code fixes (proposed)
 1. Evidence tier "Scan verified": Brain blocks a security claim in a draft unless a stored scan supports it.
@@ -139,7 +137,7 @@ Tick only when the beat has run for real and been recorded.
 1. Get a real scorer number (WSL or Linux checkout). Decide the dependency options above.
 2. Band gate: sign in, one room, one @mention, one task moved to Done.
 3. Real Cognee and Neo4j behind `keep-api`; time remember, recall, forget.
-4. Create `lumen-app` (outside this repo) and `scripts/snyk_review.py`.
+4. Write `scripts/snyk_review.py` (lumen-app is a reference only, not ours to build).
 5. Wire the UI to real Brain block events once their shape is agreed.
 
 ## 6. How to update this page
