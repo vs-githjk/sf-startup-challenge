@@ -24,6 +24,7 @@ export function Panel({ id, title, count, hint, className, children }: { id: str
 const Rows = ({ empty, children, items }: { empty: string; children: ReactNode; items: number }) =>
   <ol className="rows">{items ? children : <li className="empty">{empty}</li>}</ol>;
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const Chip = ({ kind, label }: { kind: string; label?: string }) => <span className={`chip ${kind}`}>{label ?? kind}</span>;
 
 export function MemoryRows({ mems, empty }: { mems: Memory[]; empty: string }) {
@@ -44,17 +45,43 @@ export function Conflicts({ items }: { items: Conflict[] }) {
     <Rows items={items.length} empty="No conflicts. Every pending claim agrees with memory.">
       {items.map((c) => (
         <Row key={c.key} cls="pair">
-          <div className="side said"><small>Draft says</small><div className="quote">{c.said}</div></div>
-          <div className="link" />
+          <div className="side said"><small>{c.to ? `Draft to ${c.to} says` : "Draft says"}</small><div className="quote">{c.said}</div></div>
           <div className="side mem">
-            <small>Memory says{c.to ? ` (${c.to})` : ""}</small>
+            <small>{c.ds ? `Memory, ${cap(pretty(c.ds))}` : "Memory"}</small>
             <div className="quote">{c.mem}</div>
-            <div className="meta"><Chip kind="risk" label="memory" /><span>{`[memory: ${c.ds} / ${c.mem.slice(0, 40)}]`}</span></div>
             <div className="note">{c.note}</div>
           </div>
         </Row>
       ))}
     </Rows>
+  );
+}
+
+// The sign shows one contradiction, preferring a real Brain block over the browser's word match.
+// Keyed by that conflict so it lights up again only when the conflict changes.
+export function LedBoard({ items, promises }: { items: Conflict[]; promises: number }) {
+  const c = items.find((x) => !x.draftId) ?? items[0];
+  const blocked = c !== undefined && !c.draftId;
+  return (
+    <section className="sign" aria-labelledby="h-sign">
+      <h2 id="h-sign" className="sr">Contradiction check</h2>
+      <div className="led" role="status" aria-live="polite" key={c?.key ?? "clear"}>
+        {c ? (
+          <>
+            <p className="l1 red lit">{blocked ? "Blocked by Brain" : "Check before sending"}</p>
+            <p className="l2 lit">{c.said}</p>
+            <p className="l3 lit">{`Memory says: ${c.mem}`}</p>
+          </>
+        ) : (
+          <>
+            <p className="l1 lit">All clear</p>
+            <p className="l2 lit">{`${promises} ${promises === 1 ? "promise" : "promises"} on record`}</p>
+            <p className="l3 lit">No draft contradicts what customers or investors were told</p>
+          </>
+        )}
+      </div>
+      {items.length > 0 && <Conflicts items={items} />}
+    </section>
   );
 }
 

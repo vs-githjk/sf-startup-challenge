@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { DEMO, load, type Snapshot } from "./api";
 import { findConflicts, graphData } from "./derive";
-import PrismWave from "./components/PrismWave";
 import MemoryGraph from "./components/MemoryGraph";
-import { Conflicts, Drafts, Feed, MemoryRows, Panel } from "./components/Panels";
+import { Drafts, Feed, LedBoard, MemoryRows, Panel, Usage } from "./components/Panels";
 import { BandCard, CogneeCard, FlexpriceCard, SnykCard, computeStats } from "./components/Tools";
 
 function useKeep() {
@@ -47,50 +46,33 @@ export default function App() {
         <div className="brand">
           <svg className="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 29 27H3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><path d="M16 3v24" stroke="currentColor" strokeWidth="1.2" opacity=".55" /></svg>
           <span className="word">PrismKeep</span>
-          <span className="tag">{DEMO ? "demo preview, synthetic data" : "synthetic data"}</span>
+          <span className="tag">{DEMO ? "Sample data, demo mode" : "Synthetic data"}</span>
         </div>
         <div className="status" role="status" aria-live="polite">
           <span className={`live ${snap ? (error ? "off" : "on") : ""}`} aria-hidden="true" />
-          <span>{error ? `keep-api offline (${error})` : snap ? (DEMO ? "demo" : "keep-api live") : "connecting"}</span>
+          <span>{error ? `Memory offline: ${error}` : snap ? (DEMO ? "Demo" : "Memory connected") : "Connecting"}</span>
         </div>
       </header>
 
-      <section className="hero" aria-label="Overview">
-        <PrismWave />
-        <div className="copy" data-keepout="copy">
-          <h1>Promises kept. Stories straight.</h1>
-          <p className="sub">Agents on Band remember every promise in Cognee, check each message before it goes out, meter their work in Flexprice and have every fix scanned by Snyk.</p>
-        </div>
-      </section>
-
       <main id="main">
-        {/* what the demo shows first: contradiction, approval, promises; how it works comes after */}
+        <LedBoard items={d.conflicts} promises={d.promises.length} />
+
         <section className="layout" aria-label="What the founder sees">
-          <Panel id="conflict" className="conflict wide" title="Contradiction check" count={d.conflicts.length ? `${d.conflicts.length} to review` : "clear"} hint="What a draft says, set against what your other conversations say.">
-            <Conflicts items={d.conflicts} />
-          </Panel>
-          <Panel id="drafts" title="Approval queue" count={`${st.waiting} pending`} hint="Nothing leaves until you approve in Band. The hash proves what was approved.">
+          <Panel id="drafts" className="queue" title="Approval queue" count={`${st.waiting} waiting`} hint="Nothing leaves until you approve in Band. The hash proves what was approved.">
             <Drafts drafts={s.drafts} />
           </Panel>
-          <Panel id="promises" title="Promise ledger" count={String(d.promises.length)} hint="Every promise made to investors and customers, from Cognee memory.">
+          <Panel id="promises" title="Promises" count={String(d.promises.length)} hint="Every promise made to investors and customers, from memory.">
             <MemoryRows mems={d.promises} empty={snap ? "No promises yet. Paste a conversation into Band and the Listener will log them here." : "Waiting for keep-api. Start it with: KEEP_BACKEND=local python -m keep.api"} />
           </Panel>
-          <Panel id="graph" className="graph wide" title="Memory graph" count={`${d.nodes.length} nodes, ${d.links.length} links`} hint="Each hub is a Cognee dataset. Links join a pending draft to the memory that contradicts it.">
+          <Panel id="graph" className="wide" title="Memory graph" count={`${d.nodes.length} facts and hubs`} hint="Each hub groups the memories about one customer, investor or team area. A dashed red line joins a waiting draft to the memory it contradicts.">
             <MemoryGraph nodes={d.nodes} links={d.links} />
           </Panel>
-          <Panel id="events" title="Live activity" className="feed wide" count={String(s.events.length)}>
-            <Feed events={s.events} />
+          <Panel id="cost" title="Cost per agent" count={`${Math.round(s.balance)} credits left`}>
+            <Usage agents={s.agents} balance={s.balance} start={s.start} gate={s.gate} />
           </Panel>
-        </section>
-
-        <section className="flow" aria-label="How a conversation moves through the system">
-          <ol>
-            <li><b>Founder</b>pastes a call, ticket or meeting</li>
-            <li><b>Band room</b>agents plan, hand off by @mention</li>
-            <li><b>keep-api</b>one service in front of every tool</li>
-            <li><b>Cognee, Flexprice, Snyk</b>memory, credits, security</li>
-            <li><b>Approval</b>founder signs off, hash recorded</li>
-          </ol>
+          <Panel id="events" title="Activity" count={String(s.events.length)}>
+            <Feed events={s.events.slice(-12)} />
+          </Panel>
         </section>
 
         <section className="tools" aria-label="The four integrations">
