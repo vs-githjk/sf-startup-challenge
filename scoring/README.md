@@ -20,13 +20,13 @@ Points = score x weight / 5. Max is 130 with both bonuses.
 | Criterion | Weight | Now | Points | Target | Target pts | Evidence now | Biggest gap |
 |---|---|---|---|---|---|---|---|
 | Band | 25 | 1 | 5.0 | 5 | 25 | Agent instruction files only | Band Desktop not run: no room, board, @mention or approval |
-| Cognee | 25 | 2 | 10.0 | 5 | 25 | `keep` API with offline backend, 17 tests pass | Real Cognee and Neo4j never run; no restart or cross-agent proof |
+| Cognee | 25 | 3 | 15.0 | 5 | 25 | PR #3 merged: Cognee as a container behind keep-api, ledger-scoped recall, forget and improve; 29 tests pass. Real run reported by Vidyut and Abhinav, not re-run by me | No restart or cross-agent proof on video; Neo4j view not shown |
 | Viability | 20 | 3 | 12.0 | 4 | 16 | Buyer, price, why now, competitor research | Prices not verified live; no customer evidence |
 | Execution and demo | 20 | 2 | 8.0 | 4 | 16 | UI built and checked in demo mode | Not tested on live keep-api; no end-to-end run; no video |
 | Innovation | 10 | 2 | 4.0 | 4 | 8 | Contradiction check designed and drawn | Brain never produced a real block |
-| Flexprice | 10 | 3 | 6.0 | 4 | 8 | Setup ran against the real Flexprice account (customer, 3 meters, plan, subscription, wallet); I sent one cost event, flexprice_synced True; gate reads the live wallet | Gate not yet shown denying; no dashboard capture; local and Flexprice balances differ (async) |
-| Snyk | 10 | 2 | 4.0 | 4 | 8 | Snyk Code ran on our repo: 0 issues | Dependency score is bad (section 3); reviewer agent never run in Band |
-| **Total** | **130** | | **49.0** | | **106** | | |
+| Flexprice | 10 | 3 | 6.0 | 4 | 8 | Gate denial shown from the live wallet using a 50 credit demo customer (`lumen_lowcredit`); setup ran against the real Flexprice account (customer, 3 meters, plan, subscription, wallet); I sent one cost event, flexprice_synced True; gate reads the live wallet | Not on video; no dashboard capture; local and Flexprice balances differ (async) |
+| Snyk | 10 | 3 | 6.0 | 4 | 8 | Organizers' scorer ran for real (Rishit, public URL): 9.8 of 10, 9.9 after the md5 fix; Snyk Code now 0 issues (my rescan on main); scan wrapper `scripts/snyk-scan.sh` and `.snyk` (Python 3.12) merged in PR #4 | Scorer's own dependency scan did not run (Rishit's separate scan: 61 deps, 1 low); reviewer loop never run in Band |
+| **Total** | **130** | | **56.0** | | **106** | | |
 
 History (add a row each checkpoint):
 
@@ -34,6 +34,9 @@ History (add a row each checkpoint):
 |---|---|---|---|---|---|---|---|---|---|
 | start of build | 34.0 | 5 | 5 | 12 | 4 | 4 | 2 | 2 | Code and docs only |
 | after UI, path fix, Flexprice merge | 49.0 | 5 | 10 | 12 | 8 | 4 | 6 | 4 | 17 tests pass; nothing live in Band yet |
+| after PR #3 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | 29 tests pass; Cognee in a container; Band still not run |
+| after PR #4 merged to main | 54.0 | 5 | 15 | 12 | 8 | 4 | 6 | 4 | Snyk tooling added, no new run, so no change |
+| after build/agents-band merged | 56.0 | 5 | 15 | 12 | 8 | 4 | 6 | 6 | Official scorer 9.8 (Rishit); code 0 issues; gate denial shown live |
 
 ## 2. How the four tools depend on each other
 
@@ -64,7 +67,8 @@ Score = 10 - (critical x 3 + high x 1 + medium x 0.3 + low x 0.1). More than 10 
 
 | Scan | Result | Source |
 |---|---|---|
-| Snyk Code (our code) | 0 issues. Was 4 low before `keep/paths.py` | my run, 2026-10-20 |
+| Snyk Code (our code) | 0 issues on main. The 2 low findings after PR #3 were hashlib.md5 for Cognee file names, now marked usedforsecurity=False | my run on main, 2026-10-20 |
+| Dependencies after PR #3 | Vidyut reports 213 to 62 deps, 0 known vulns (`cognee` and `langchain-community` moved out into a container). Repo now has `requirements.txt`. My `snyk test --file=requirements.txt` fails with "Missing required packages" because it needs them installed, so I have not confirmed the number | Vidyut, unverified by me |
 | Snyk Open Source on the repo as is | "No supported files found". Snyk does not read `uv.lock` | my run and Rishit's baseline |
 | Same tree exported to requirements.txt (outside the repo) | 210 deps: 5 critical, 18 high, 7 medium, 2 low | Rishit's baseline in `plan/progress.md` |
 | Organizers' Docker scorer | Not completed. Docker is running now, but the scorer's `tar` step fails on a Windows path | my run |
@@ -95,7 +99,7 @@ Options to decide (Vidyut and Rishit):
 | Snyk CLI and Snyk Code | Works, token in `.env` |
 | Dependencies | Blocked (above) |
 | Containers | Not done |
-| Reviewer agent in the Band room | Written in `agents/security_reviewer/CLAUDE.md`, never run |
+| Reviewer agent in the Band room | Written, now calls `scripts/snyk-scan.sh` (PR #4), never run in a room |
 | Posts findings, blocks the work item | Designed, needs Band board |
 | Stores recurring issues in Cognee | Designed (`keep remember --dataset eng_security`), never run on real Cognee |
 
@@ -115,6 +119,7 @@ Record every run here and in `plan/progress.md`.
 |---|---|---|---|---|
 | baseline (Rishit) | no supported files; exported tree 5C/18H/7M/2L | 4 low | not run | Docker missing then |
 | after path fix | not scanned (Snyk 503 on uv.lock) | 0 issues | fails on Windows path | `keep/paths.py` |
+| after PR #3 | not confirmed (Vidyut: 62 deps, 0 vulns) | 2 low | not run | Docker scorer still fails on Windows path |
 
 ## 4. Demo beat checklist
 
@@ -134,7 +139,7 @@ Tick only when the beat has run for real and been recorded.
 
 ## 5. Next actions, in order
 
-1. Get a real scorer number (WSL or Linux checkout). Decide the dependency options above.
+1. Confirm the dependency count with the organizers' scorer (Linux container). The old critical findings should be gone with Cognee moved out.
 2. Band gate: sign in, one room, one @mention, one task moved to Done.
 3. Real Cognee and Neo4j behind `keep-api`; time remember, recall, forget.
 4. Write `scripts/snyk_review.py` (lumen-app is a reference only, not ours to build).
