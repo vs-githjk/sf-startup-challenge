@@ -1,6 +1,6 @@
 # PrismKeep demo script
 
-All data is synthetic (Lumen Analytics, Acme Logistics, Northline Ventures). Say so on the first title card. Seeded before recording: Acme customer call (Oct 13: SSO fix promised by Friday, "we will look at alternatives if SSO slips"), Northline meeting 1 (Oct 13: founder promised the retention cohort by Oct 17), one prior security finding (raw SQL in an export path, Sep).
+All data is synthetic (Lumen Analytics, Acme Logistics, Northline Ventures). Say so on the first title card. Seeded before recording: Acme customer call (Oct 13: SSO fix promised by Friday, "we will look at alternatives if SSO slips"), Northline meeting 1 (Oct 13: founder promised the retention cohort by Oct 16), one prior security finding (raw SQL in an export path, Sep).
 
 ## 3 minute version (main video, cap 3:00)
 

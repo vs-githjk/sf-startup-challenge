@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "prism": {
+      "type": "http",
+      "url": "https://meeting-copilot-api.onrender.com/mcp",
+      "headers": { "Authorization": "Bearer PASTE_PRISM_PAT_HERE" }
+    }
+  }
+}
