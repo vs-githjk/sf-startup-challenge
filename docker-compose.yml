@@ -1,5 +1,5 @@
 # Local infrastructure. Neo4j is Cognee's graph store (extra credit) and the "company brain" view.
-# Start:  NEO4J_PASSWORD=<pick one> docker compose up -d neo4j
+# Start:  docker compose up -d neo4j cognee   (NEO4J_PASSWORD and LLM_API_KEY come from .env)
 # Browse: http://localhost:7474  (user neo4j, password from NEO4J_PASSWORD)
 services:
   neo4j:
@@ -18,5 +18,37 @@ services:
       timeout: 3s
       retries: 30
 
+  # Cognee 1.6.5 runs as its own container (REST API) so its dependency tree stays out of our
+  # repo. keep-api talks to it over HTTP (COGNEE_URL, default http://127.0.0.1:8000).
+  # Single local demo instance: auth and multi-tenancy are off, so it is bound to loopback only.
+  cognee:
+    image: cognee/cognee:1.6.5
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ENABLE_BACKEND_ACCESS_CONTROL: "false"
+      REQUIRE_AUTHENTICATION: "false"
+      ACCEPT_LOCAL_FILE_PATH: "false"
+      ALLOW_HTTP_REQUESTS: "false"
+      TELEMETRY_DISABLED: "1"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openai}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-4o-mini}"
+      LLM_API_KEY: "${LLM_API_KEY:-}"
+      EMBEDDING_PROVIDER: "${EMBEDDING_PROVIDER:-openai}"
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-openai/text-embedding-3-large}"
+      EMBEDDING_DIMENSIONS: "${EMBEDDING_DIMENSIONS:-3072}"
+      EMBEDDING_API_KEY: "${EMBEDDING_API_KEY:-${LLM_API_KEY:-}}"
+      GRAPH_DATABASE_PROVIDER: "neo4j"
+      GRAPH_DATABASE_URL: "bolt://neo4j:7687"
+      GRAPH_DATABASE_USERNAME: "neo4j"
+      GRAPH_DATABASE_PASSWORD: "${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
+    volumes:
+      - cognee-data:/cognee-storage
+    restart: unless-stopped
+
 volumes:
   neo4j-data:
+  cognee-data:

@@ -140,7 +140,7 @@ def create_app() -> FastAPI:
             raise HTTPException(404, "unknown data_id")
         store.mark_forgotten(m["id"])
         try:
-            await backend.forget(m["cognee_data_id"])
+            await backend.forget(m["cognee_data_id"], m["dataset"])
         except Exception as exc:  # ledger already hides it from recall
             log.warning("backend forget failed: %s", type(exc).__name__)
         store.event("forget", "", {"data_id": m["id"], "dataset": m["dataset"]})
