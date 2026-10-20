@@ -1,91 +1,162 @@
-// ASCII prism hero. Canvas 2D, no dependencies. A prism splits one red beam of promises into a spectrum.
-// The pointer shoves glyphs away, brightens them, and leaves a decaying heat trail.
-// Capped at 30 fps, paused off screen or in a hidden tab, drawn once if the user prefers reduced motion.
+// ASCII recall field. Every star is a memory (promise, risk, claim, finding, draft), placed by a hash of its id.
+// The pointer is a recall probe shaped like a prism: move it and the field scrambles (no answer yet),
+// hold still and it locks, brackets the nearest memories and cites them as [memory: dataset / quote].
+// Conflicting pairs get a red dotted link. Canvas 2D, no dependencies, 30 fps cap, paused off screen,
+// one locked still frame under reduced motion. Mechanic adapted from clone/kalmanspace (our own repo).
 (() => {
   const hero = document.getElementById("hero");
   const cv = document.getElementById("ascii");
   if (!hero || !cv) return;
   const ctx = cv.getContext("2d");
-  const CW = 11, CH = 17, RAMP = ".:-=+*#%@", RADIUS = 120;
-  const COLORS = { ink: "239,231,214", beam: "238,109,87", brass: "224,169,59", band: ["238,109,87", "224,169,59", "134,191,141", "143,180,217", "180,155,214"] };
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let W = 0, H = 0, cols = 0, rows = 0, heat = new Float32Array(0), mx = -9999, my = -9999, running = false, last = 0;
+  const CW = 9, CH = 12, RAMP = [".", ":", "+", "*", "o", "O", "@"], SCRAMBLE = "01+*-=/\\|<>#$%&:.";
+  const INK = "239,231,214", BRASS = "224,169,59", BAD = "238,109,87", COOL = "143,180,217";
+  const KIND = { promise: [BRASS, 1], risk: [BAD, 0.95], draft: [INK, 0.9], claim: [COOL, 0.8], finding: ["180,155,214", 0.75], decision: ["134,191,141", 0.7], correction: ["134,191,141", 0.7] };
+  const SPECTRUM = [BAD, BRASS, "134,191,141", COOL];
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("still"); // ?still=1 gives a locked static frame for stills
+  const el = (id) => document.getElementById(id);
+
+  let W = 0, H = 0, cols = 0, rows = 0, dither = [], sky = [], mem = [], links = [];
+  let sx = 0.5, sy = 0.45, mx = null, my = null, energy = 0, lockT = 0, running = false, last = 0, hudAt = 0;
+
+  const rng = (a) => () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const hash = (s) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
+  const snap = (v, n) => Math.round(v / n) * n;
 
   function resize() {
     const dpr = Math.min(2, devicePixelRatio || 1);
     W = hero.clientWidth; H = hero.clientHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
+    cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.font = `500 ${CH - 4}px "JetBrains Mono", ui-monospace, Consolas, monospace`;
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `500 ${CH - 1}px "JetBrains Mono", ui-monospace, Consolas, monospace`;
+    ctx.textBaseline = "top";
     cols = Math.ceil(W / CW); rows = Math.ceil(H / CH);
-    heat = new Float32Array(cols * rows);
+    const r = rng(7);  // fixed seed: the sky is the same every visit
+    dither = Array.from({ length: Math.floor(cols * rows * 0.05) }, () => ({ c: Math.floor(r() * cols), r: Math.floor(r() * rows), p: r() }));
+    sky = Array.from({ length: Math.floor(cols * rows * 0.03) }, () => ({ u: r(), v: r(), b: Math.pow(r(), 3), p: r() * 40 }));
     frame(performance.now());
   }
 
-  const segDist = (px, py, ax, ay, bx, by) => {
-    const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1)));
-    return [Math.hypot(px - ax - vx * t, py - ay - vy * t), t];
+  window.addEventListener("prismkeep:graph", (e) => {
+    const d = e.detail || {};
+    mem = (d.nodes || []).map((n) => ({ ...n, u: 0.05 + 0.9 * hash(n.id), v: 0.1 + 0.38 * hash(`${n.id}#`), b: (KIND[n.type] || [INK, 0.6])[1] }));
+    links = d.links || [];
+  });
+
+  const dots = (ax, ay, bx, by, ch) => {
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / CW));
+    for (let i = 1; i < n; i++) ctx.fillText(ch, snap(ax + ((bx - ax) * i) / n, CW), snap(ay + ((by - ay) * i) / n, CH));
   };
 
   function frame(now) {
-    const t = now / 1000;
+    const dt = Math.min(64, now - last || 16); last = now;
+    // probe target: the pointer, or a slow survey drift when idle
+    let tx = mx, ty = my;
+    if (tx === null) {  // idle: tour the memories, contradicting ones first, 5 s each
+      const linked = new Set(links.flatMap((l) => [l.a, l.b]));
+      const tour = mem.filter((m) => linked.has(m.id)).concat(mem.filter((m) => !linked.has(m.id)));
+      const m = tour.length ? tour[Math.floor(now / 5000) % tour.length] : null;
+      tx = m ? m.u : 0.5 + 0.3 * Math.sin(now * 0.00021); ty = m ? m.v : 0.4 + 0.16 * Math.sin(now * 0.00033);
+    }
+    const dx = (tx - sx) * (reduced ? 1 : 0.07), dy = (ty - sy) * (reduced ? 1 : 0.07);
+    sx += dx; sy += dy;
+    const rate = Math.hypot(dx * W, dy * H) / Math.max(1, dt);          // px per ms
+    energy += (Math.min(1, rate * 9) - energy) * 0.18;
+    if (reduced || energy < 0.14) lockT += dt; else lockT = 0;
+    const lock = reduced ? 1 : Math.max(0, Math.min(1, (lockT - 260) / 620));
+
+    const bx = snap(sx * W, CW), by = snap(sy * H, CH), fov = Math.min(W, H) * 0.26;
+    const px = (u, depth) => u * W - (sx - 0.5) * depth;
     ctx.clearRect(0, 0, W, H);
-    const A = [W * 0.70, H * 0.12], B = [W * 0.58, H * 0.80], C = [W * 0.84, H * 0.80];  // prism
-    const P0 = [0, H * 0.04], P1 = [W * 0.64, H * 0.50];                                   // incoming beam
-    const O = [W * 0.76, H * 0.50];                                                         // exit point
-    const area = (B[1] - C[1]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[1] - C[1]);
-    let lastFill = "";
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-      const cx = c * CW + CW / 2, cy = r * CH + CH / 2, i = r * cols + c;
-      let ch = "K", rgb = COLORS.ink, a = 0.08;
 
-      const l1 = ((B[1] - C[1]) * (cx - C[0]) + (C[0] - B[0]) * (cy - C[1])) / area;
-      const l2 = ((C[1] - A[1]) * (cx - C[0]) + (A[0] - C[0]) * (cy - C[1])) / area;
-      const l3 = 1 - l1 - l2;
-      if (l1 > 0 && l2 > 0 && l3 > 0) {  // inside the prism: shaded by distance to its edges
-        const edge = Math.min(l1, l2, l3), lum = Math.min(1, 0.25 + edge * 2.4 + 0.12 * Math.sin(t * 1.4 + cx * 0.03));
-        ch = RAMP[Math.round(lum * (RAMP.length - 1))]; a = 0.2 + lum * 0.6;
+    for (const d of dither) {                                           // sensor noise
+      const x = d.c * CW, y = d.r * CH, inside = Math.hypot(x - bx, y - by) < fov;
+      ctx.fillStyle = `rgba(${INK},${(inside ? 0.14 : 0.05) * (0.5 + 0.5 * Math.sin(now * 0.001 + d.p * 40))})`;
+      ctx.fillText(".", x, y);
+    }
+    for (const s of sky) {                                              // background stars, slow parallax
+      const x = snap(px(s.u, 40), CW), y = snap(s.v * H - (sy - 0.45) * 24, CH);
+      const inside = Math.hypot(x - bx, y - by) < fov, a = (0.28 + s.b * 0.6) * (inside ? 1 : 0.6);
+      ctx.fillStyle = `rgba(${INK},${a * (0.85 + 0.15 * Math.sin(now * 0.002 + s.p))})`;
+      ctx.fillText(RAMP[Math.min(RAMP.length - 1, Math.floor(Math.sqrt(s.b) * RAMP.length))], x, y);
+    }
+
+    // memories
+    const seen = mem.map((m) => {
+      const x = snap(px(m.u, 90), CW), y = snap(m.v * H - (sy - 0.45) * 50, CH);
+      return { m, x, y, inside: Math.hypot(x - bx, y - by) < fov };
+    });
+    const byId = new Map(seen.map((s) => [s.m.id, s]));
+    for (const s of seen) {
+      const [rgb] = KIND[s.m.type] || [INK];
+      ctx.fillStyle = `rgba(${rgb},${(0.62 + s.m.b * 0.38) * (s.inside ? 1 : 0.7)})`;
+      ctx.fillText(s.inside ? "@" : "O", s.x, s.y);
+    }
+    ctx.fillStyle = `rgba(${BRASS},${0.28 + 0.4 * lock})`;               // acquisition circle
+    for (let i = 0; i < 84; i++) { const t = (i / 84) * Math.PI * 2; ctx.fillText(".", snap(bx + Math.cos(t) * fov, CW), snap(by + Math.sin(t) * fov, CH)); }
+
+    if (energy > 0.06 && !reduced) {                                    // no answer while slewing
+      ctx.fillStyle = `rgba(${COOL},${0.14 + energy * 0.5})`;
+      for (let i = 0, n = Math.floor(energy * 170); i < n; i++) {
+        const t = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * fov;
+        ctx.fillText(SCRAMBLE[(Math.random() * SCRAMBLE.length) | 0], snap(bx + Math.cos(t) * r, CW), snap(by + Math.sin(t) * r, CH));
       }
-      const [bd, bt] = segDist(cx, cy, P0[0], P0[1], P1[0], P1[1]);
-      if (bd < 8) { ch = "P"; rgb = COLORS.beam; a = 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(bt * 26 - t * 3.2)); }
-      COLORS.band.forEach((col, k) => {
-        const E = [W + 20, H * (0.14 + k * 0.17)], [d, u] = segDist(cx, cy, O[0], O[1], E[0], E[1]);
-        if (d < 7 && u > 0.02) { ch = RAMP[4 + ((c + r + k) % 4)]; rgb = col; a = 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(u * 30 - t * 2.6 + k)) * (1 - u * 0.45); }
+    }
+
+    const hits = seen.filter((s) => s.inside).sort((a, b) => b.m.b - a.m.b).slice(0, 5);
+    if (lock > 0) {
+      links.forEach((l) => {                                            // contradiction: red dotted link
+        const a = byId.get(l.a), b = byId.get(l.b);
+        if (a && b && (a.inside || b.inside)) { ctx.fillStyle = `rgba(${BAD},${0.15 + lock * 0.55})`; dots(a.x, a.y, b.x, b.y, "!"); }
       });
-
-      let ox = 0, oy = 0;
-      if (!reduced) {
-        const dx = cx - mx, dy = cy - my, d = Math.hypot(dx, dy);
-        if (d < RADIUS) {
-          const f = 1 - d / RADIUS;
-          ox = (dx / (d || 1)) * f * f * 18; oy = (dy / (d || 1)) * f * f * 18;
-          heat[i] = Math.max(heat[i], f);
+      const shown = Math.ceil(lock * hits.length), placed = [];
+      for (let i = 0; i < shown; i++) {
+        const h = hits[i];
+        ctx.fillStyle = `rgba(${(KIND[h.m.type] || [BRASS])[0]},${0.55 + 0.45 * lock})`;
+        ctx.fillText("[", h.x - CW * 1.5, h.y); ctx.fillText("]", h.x + CW * 1.5, h.y);
+        if (lock > 0.7 && h.x < W - 220) {                              // cite it, unless a label is already there
+          const lx = h.x + CW * 3, ly = h.y - CH;
+          if (!placed.some((q) => Math.abs(q.x - lx) < 340 && Math.abs(q.y - ly) < 14)) {
+            placed.push({ x: lx, y: ly });
+            ctx.fillStyle = `rgba(${BRASS},${0.55 * lock})`;
+            ctx.fillText(`[memory: ${h.m.ds || "company"} / ${(h.m.text || "").replace(/\s+/g, " ").slice(0, 26)}]`, lx, ly);
+          }
         }
-        const h = heat[i];
-        if (h > 0.03) { ch = RAMP[Math.min(RAMP.length - 1, Math.floor(h * RAMP.length))]; rgb = COLORS.brass; a = Math.max(a, h * 0.9); heat[i] = h * 0.93; } else heat[i] = 0;
       }
-      const fill = `rgba(${rgb},${a.toFixed(2)})`;
-      if (fill !== lastFill) { ctx.fillStyle = fill; lastFill = fill; }
-      ctx.fillText(ch, cx + ox, cy + oy);
+    }
+
+    // the probe: a dotted prism. At lock the beam splits into four rays.
+    ctx.fillStyle = `rgba(${BRASS},${0.7 + 0.3 * lock})`;
+    const A = [bx, by - CH * 3], B = [bx - CW * 3, by + CH * 2], C = [bx + CW * 3, by + CH * 2];
+    dots(...A, ...B, "."); dots(...B, ...C, "."); dots(...C, ...A, ".");
+    ctx.fillText(lock > 0.9 ? "+" : "o", bx, by - CH);
+    if (lock > 0.3) SPECTRUM.forEach((rgb, k) => {
+      ctx.fillStyle = `rgba(${rgb},${lock * 0.85})`;
+      for (let i = 1; i <= 4; i++) ctx.fillText("-", bx + CW * (3 + i * 2), by + CH * (k - 1.5) * (1 + i * 0.25));
+    });
+
+    if (now - hudAt > 90) {                                             // readout, written straight to the DOM
+      hudAt = now;
+      const locked = lock > 0.6, top = hits[0];
+      if (el("t-state")) { el("t-state").textContent = locked ? "LOCKED" : "SLEWING"; el("t-state").className = locked ? "on" : ""; }
+      if (el("t-track")) el("t-track").textContent = String(lock > 0.4 ? hits.length : 0).padStart(2, "0");
+      if (el("t-top")) el("t-top").textContent = locked && top ? `${top.m.type}: ${(top.m.text || "").slice(0, 34)}` : "NONE";
     }
   }
 
   function loop(now) {
     if (!running) return;
-    if (now - last >= 33) { last = now; frame(now); }
+    if (now - last >= 33) frame(now);
     requestAnimationFrame(loop);
   }
   const setRunning = (on) => { if (reduced || on === running) return; running = on; if (on) requestAnimationFrame(loop); };
 
-  hero.addEventListener("pointermove", (e) => { const b = cv.getBoundingClientRect(); mx = e.clientX - b.left; my = e.clientY - b.top; });
-  hero.addEventListener("pointerleave", () => { mx = my = -9999; });
+  hero.addEventListener("pointermove", (e) => { const b = cv.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width; my = (e.clientY - b.top) / b.height; }, { passive: true });
+  hero.addEventListener("pointerleave", () => { mx = my = null; });
   new ResizeObserver(resize).observe(hero);
   new IntersectionObserver((es) => setRunning(es[0].isIntersecting && !document.hidden)).observe(hero);
   document.addEventListener("visibilitychange", () => setRunning(!document.hidden));
   resize();
 
-  // Telemetry strip: clock ticks locally, counts come from app.js through textContent.
-  const clock = document.getElementById("t-clock");
+  const clock = el("t-clock");
   if (clock) { const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour12: false }); }; tick(); setInterval(tick, 1000); }
 })();

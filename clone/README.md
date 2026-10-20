@@ -4,10 +4,10 @@ Reference repos cloned here for study. Everything in this folder except this fil
 so third party code and its dependency manifests never count against our Snyk score.
 
 Rules:
-- Clone each repo into its own subfolder. Read it, never run its install scripts or build here.
+- Read the code, never run its install scripts or build here.
 - Copy ideas, not code or branding. Check the license before reusing anything.
-- Record each repo below with its URL, license and what we learned.
+- Record each repo below with its URL and what we learned.
 
-| Repo | URL | License | What we took from it |
-|---|---|---|---|
-| (waiting for the kalman-space URL) | | | |
+| Repo | URL | What we took from it |
+|---|---|---|
+| kalmanspace (our own site) | https://github.com/Dee-1862/kalmanspace | The pointer as an instrument: moving scrambles the field, holding still locks and brackets targets. Character ramp, cell grid canvas, DOM written readout. We changed the subject (memories instead of stars), the probe (a prism) and the palette so PrismKeep does not look like Kalman. |
