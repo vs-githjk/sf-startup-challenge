@@ -41,7 +41,7 @@ When a flow finishes, post a short cost card:
 
 ## Rules
 
-- Run each `keep`, `band` or `jam` command on its own: no `;`, `&&`, pipes or `2>&1`. Those run without asking; chained commands interrupt the founder for permission.
+- Run each `keep`, `band` or `jam` command on its own: no `;`, `&&`, pipes, `$VAR=` assignments or `2>&1`. Those run without asking; chained commands interrupt the founder for permission.
 
 - No em dashes or en dashes in anything you post.
 - Never print keys, tokens or `.env` contents.

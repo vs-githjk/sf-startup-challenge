@@ -27,5 +27,7 @@ Post the score in HQ and add it to `plan/progress.md`. Score = 10 âˆ’ (criticalÃ
 
 ## Rules
 
+- Run each command on its own: no `;`, `&&`, pipes, `$VAR=` assignments or `2>&1`. Single `keep`, `band`, `jam` and `../../scripts/snyk-scan.sh` commands run without asking; chained ones interrupt the founder.
+
 - Never print SNYK_TOKEN or any key. Never add ignores to make a scan pass.
 - No em dashes or en dashes.
