@@ -53,6 +53,7 @@ def test_recall_uses_chunks_and_returns_cognee_data_id():
         seen["path"], seen["json"] = req.url.path, json.loads(req.content)
         return httpx.Response(200, json=[
             {"kind": "CHUNKS", "text": "SOC2 by March", "score": 0.9, "metadata": {"data_id": DID}},
+            {"source": "system", "status": "memory_warming_up", "text": "Memory is still warming up"},
             {"text": ""}])
 
     out = asyncio.run(backend(handler).recall(["company"], "soc2", 3))

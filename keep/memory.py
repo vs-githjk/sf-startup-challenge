@@ -98,6 +98,8 @@ class CogneeBackend:
         out = []
         for i, d in enumerate(raw if isinstance(raw, list) else []):
             d = d if isinstance(d, dict) else {"text": str(d)}
+            if d.get("source") == "system":  # e.g. "memory is still warming up", not a stored fact
+                continue
             text = next((str(d[f]) for f in TEXT_FIELDS if d.get(f)), "")
             if text:
                 out.append({"text": text, "data_id": (d.get("metadata") or {}).get("data_id"),
