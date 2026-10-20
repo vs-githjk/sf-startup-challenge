@@ -3,7 +3,7 @@ import type { GLink, GNode } from "../derive";
 
 // A readable relationship map, not a physics blob: datasets on the left, the memories they hold in the middle,
 // pending drafts on the right. A red line joins a draft to the memory that contradicts it. Fixed layout, no animation loop.
-const W = 1000, ROW = 46, TOP = 26, HUB_X = 20, MEM_X = 250, MEM_W = 470, DRAFT_X = 790, DRAFT_W = 190;
+const W = 1000, ROW = 54, TOP = 26, HUB_X = 20, MEM_X = 230, MEM_W = 500, DRAFT_X = 780, DRAFT_W = 200;
 const cut = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 export default function MemoryGraph({ nodes, links }: { nodes: GNode[]; links: GLink[] }) {
@@ -28,6 +28,8 @@ export default function MemoryGraph({ nodes, links }: { nodes: GNode[]; links: G
   const draftY = new Map(drafts.map((d, i) => [d.id, TOP + i * ROW * 1.6]));
   const H = Math.max(y + 10, TOP + drafts.length * ROW * 1.6 + 20, 120);
   const conflicts = links.filter((l) => l.type === "conflict");
+  const hit = new Set(conflicts.map((l) => l.b.replace(/^m:/, "")));
+  const conflictDrafts = new Set(conflicts.map((l) => l.a));
 
   if (!nodes.length) return <div className="stage"><p className="empty" style={{ padding: 20 }}>Nothing in memory yet. Paste a conversation into Band and this map fills in.</p></div>;
 
@@ -39,33 +41,33 @@ export default function MemoryGraph({ nodes, links }: { nodes: GNode[]; links: G
         {drafts.length > 0 && <text className="col" x={DRAFT_X} y={14}>PENDING DRAFT</text>}
         {rows.map(({ m, y: yy }) => {
           const hy = hubY.get(`ds:${m.ds}`) ?? yy;
-          return <path key={`o-${m.id}`} className="edge own" d={`M ${HUB_X + 150} ${hy + 14} C ${HUB_X + 200} ${hy + 14}, ${MEM_X - 50} ${yy + 14}, ${MEM_X} ${yy + 14}`} />;
+          return <path key={`o-${m.id}`} className="edge own" d={`M ${HUB_X + 150} ${hy + 18} C ${HUB_X + 190} ${hy + 18}, ${MEM_X - 40} ${yy + 18}, ${MEM_X} ${yy + 18}`} />;
         })}
         {conflicts.map((l) => {
           const dy = draftY.get(l.a), my = memY.get(l.b);
           if (dy === undefined || my === undefined) return null;
-          return <path key={`c-${l.a}-${l.b}`} className="edge conflict" d={`M ${DRAFT_X} ${dy + 18} C ${DRAFT_X - 40} ${dy + 18}, ${MEM_X + MEM_W + 40} ${my + 14}, ${MEM_X + MEM_W} ${my + 14}`} />;
+          return <path key={`c-${l.a}-${l.b}`} className="edge conflict" d={`M ${DRAFT_X} ${dy + 22} C ${DRAFT_X - 30} ${dy + 22}, ${MEM_X + MEM_W + 30} ${my + 18}, ${MEM_X + MEM_W} ${my + 18}`} />;
         })}
         {hubs.map((h) => (
           <g key={h.id} transform={`translate(${HUB_X} ${hubY.get(h.id) ?? 0})`}>
-            <rect className="hubbox" width="150" height="28" rx="14" />
-            <text className="hubtext" x="75" y="18">{cut(h.label ?? "", 18)}</text>
+            <rect className="hubbox" width="150" height="36" rx="18" />
+            <text className="hubtext" x="75" y="22.5">{cut(h.label ?? "", 16)} · {mems.filter((m) => `ds:${m.ds}` === h.id).length}</text>
           </g>
         ))}
         {rows.map(({ m, y: yy }) => (
           <g key={m.id} transform={`translate(${MEM_X} ${yy})`} tabIndex={0} aria-label={m.text} className="memnode"
             onPointerEnter={() => setTip(m.text)} onFocus={() => setTip(m.text)} onPointerLeave={() => setTip(null)} onBlur={() => setTip(null)}>
-            <rect className="membox" width={MEM_W} height="28" rx="8" />
-            <circle className={`dot ${m.type}`} cx="14" cy="14" r="5" />
-            <text x="28" y="18.5">{cut(m.text, 62)}</text>
-            <text className="kind" x={MEM_W - 10} y="18.5" textAnchor="end">{m.type}</text>
+            <rect className={`membox${hit.has(m.id) ? " hit" : ""}`} width={MEM_W} height="36" rx="12" />
+            <circle className={`dot ${m.type}`} cx="18" cy="18" r="5" />
+            <text x="34" y="22.5">{cut(m.text, 56)}</text>
+            <rect className={`pill ${m.type}`} x={MEM_W - 78} y="8" width="68" height="20" rx="10" /><text className={`pilltext ${m.type}`} x={MEM_W - 44} y="22" textAnchor="middle">{m.type}</text>
           </g>
         ))}
         {drafts.map((d) => (
           <g key={d.id} transform={`translate(${DRAFT_X} ${draftY.get(d.id) ?? 0})`} tabIndex={0} aria-label={d.text}
             onPointerEnter={() => setTip(d.text)} onFocus={() => setTip(d.text)} onPointerLeave={() => setTip(null)} onBlur={() => setTip(null)}>
-            <rect className="draftbox" width={DRAFT_W} height="36" rx="8" />
-            <text x="12" y="22.5">{cut(d.text.replace(/^Draft to /, ""), 26)}</text>
+            <rect className={`draftbox${conflictDrafts.has(d.id) ? " hit" : ""}`} width={DRAFT_W} height="44" rx="12" />
+            <text x="14" y="27">{cut(d.text.replace(/^Draft to /, ""), 24)}</text>
           </g>
         ))}
       </svg>
