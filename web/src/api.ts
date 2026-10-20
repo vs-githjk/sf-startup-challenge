@@ -4,7 +4,7 @@ export type Draft = { id: string; to_name: string; subject: string; body: string
 export type Agent = { agent: string; harness?: string; tokens_in: number; tokens_out: number; tasks: number; usd?: number | null };
 export type Ev = { id: number; ts: string; type: string; agent?: string; payload?: Record<string, unknown> };
 export type Gate = { feature: string; allow: boolean; cost?: number; balance?: number };
-export type Snapshot = { mems: Memory[]; drafts: Draft[]; agents: Agent[]; events: Ev[]; balance: number; start: number; gate: Gate };
+export type Snapshot = { mems: Memory[]; drafts: Draft[]; agents: Agent[]; events: Ev[]; balance: number; start: number; gate: Gate; backend: string };
 
 export const DEMO = new URLSearchParams(location.search).has("demo");
 export const STILL = new URLSearchParams(location.search).has("still");
@@ -34,8 +34,12 @@ const DEMO_DATA: Snapshot = {
     { id: 2, ts: ago(4), type: "recall", agent: "drafter", payload: { query: "open promises for Northline", n: 2 } },
     { id: 3, ts: ago(3), type: "draft", agent: "drafter", payload: { to: "Sarah Chen" } },
     { id: 4, ts: ago(2), type: "cost", agent: "brain", payload: { tokens_in: 4000, tokens_out: 600, tasks: 1 } },
+    { id: 5, ts: ago(1.5), type: "approve", agent: "chief_of_staff", payload: { id: "d2", sha256: "9f2c7a1be04d3358a6c1f0d9e87b24c5" } },
+    { id: 6, ts: ago(1), type: "send", agent: "chief_of_staff", payload: { id: "d2", flexprice_synced: true } },
+    { id: 7, ts: ago(0.8), type: "forget", agent: "brain", payload: { dataset: "rel_acme" } },
+    { id: 8, ts: ago(0.6), type: "improve", agent: "brain", payload: { dataset: "rel_acme", feedback: "Acme renewed for 12 months" } },
   ],
-  balance: 140, start: 1000, gate: { feature: "deep_research", allow: false, cost: 200, balance: 140 },
+  balance: 140, start: 1000, gate: { feature: "deep_research", allow: false, cost: 200, balance: 140 }, backend: "LocalBackend (demo)",
 };
 
 async function get<T>(path: string): Promise<T> {
@@ -46,9 +50,9 @@ async function get<T>(path: string): Promise<T> {
 
 export async function load(): Promise<Snapshot> {
   if (DEMO) return structuredClone(DEMO_DATA);
-  const [m, d, u, c, e, g] = await Promise.all([
+  const [m, d, u, c, e, g, hl] = await Promise.all([
     get<{ memories?: Memory[] }>("/memories"), get<{ drafts?: Draft[] }>("/drafts"), get<{ agents?: Agent[] }>("/usage"),
-    get<{ balance?: number; start?: number }>("/credits"), get<{ events?: Ev[] }>("/events"), get<Gate>("/gate/deep_research"),
+    get<{ balance?: number; start?: number }>("/credits"), get<{ events?: Ev[] }>("/events"), get<Gate>("/gate/deep_research"), get<{ backend?: string }>("/health"),
   ]);
-  return { mems: m.memories ?? [], drafts: d.drafts ?? [], agents: u.agents ?? [], events: e.events ?? [], balance: Number(c.balance ?? 0), start: Number(c.start || 1000), gate: g };
+  return { mems: m.memories ?? [], drafts: d.drafts ?? [], agents: u.agents ?? [], events: e.events ?? [], balance: Number(c.balance ?? 0), start: Number(c.start || 1000), gate: g, backend: hl.backend ?? "unknown" };
 }
