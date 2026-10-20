@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DEMO, load, type Snapshot } from "./api";
 import { findConflicts, graphData } from "./derive";
-import GlyphMosaic from "./components/GlyphMosaic";
+import PrismWave from "./components/PrismWave";
 import MemoryGraph from "./components/MemoryGraph";
 import { Conflicts, Drafts, Feed, MemoryRows, Panel } from "./components/Panels";
 import { BandCard, CogneeCard, FlexpriceCard, SnykCard, TOOL_COLORS, computeStats } from "./components/Tools";
@@ -63,7 +63,7 @@ export default function App() {
       </header>
 
       <section className="hero" aria-label="Overview">
-        <GlyphMosaic />
+        <PrismWave />
         <div className="copy" data-keepout="copy">
           <h1>Promises kept. Stories straight.</h1>
           <p className="sub">Agents on Band remember every promise in Cognee, check each message before it goes out, meter their work in Flexprice and have every fix scanned by Snyk.</p>
