@@ -31,7 +31,10 @@ services:
     environment:
       ENABLE_BACKEND_ACCESS_CONTROL: "false"
       REQUIRE_AUTHENTICATION: "false"
-      ACCEPT_LOCAL_FILE_PATH: "false"
+      # Must be true: the REST remember endpoint stages raw text as a temp file inside the
+      # container before ingesting it ("Local files are not accepted" / 415 otherwise).
+      # The API is bound to 127.0.0.1 only, so only this laptop can reach it.
+      ACCEPT_LOCAL_FILE_PATH: "true"
       ALLOW_HTTP_REQUESTS: "false"
       TELEMETRY_DISABLED: "1"
       LLM_PROVIDER: "${LLM_PROVIDER:-openai}"

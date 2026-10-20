@@ -41,6 +41,8 @@ When a flow finishes, post a short cost card:
 
 ## Rules
 
+- Write money as `USD 0.85`, never with a `$` sign, in anything you pass to a shell command (`jam send`, `band ask`): the shell turns `$0` into `/bin/zsh`. Wrap message text in single quotes.
+
 - Run each `keep`, `band` or `jam` command on its own: no `;`, `&&`, pipes, `$VAR=` assignments or `2>&1`. Those run without asking; chained commands interrupt the founder for permission.
 
 - No em dashes or en dashes in anything you post.
