@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DEMO, load, type Snapshot } from "./api";
 import { findConflicts, graphData } from "./derive";
 import MemoryGraph from "./components/MemoryGraph";
+import Workspace from "./Workspace";
 import { Drafts, Feed, LedBoard, MemoryRows, Panel, Usage } from "./components/Panels";
 import { BandCard, CogneeCard, FlexpriceCard, SnykCard, computeStats } from "./components/Tools";
 
@@ -29,6 +30,7 @@ const EMPTY: Snapshot = { mems: [], drafts: [], agents: [], events: [], balance:
 export default function App() {
   const { snap, error } = useKeep();
   const s = snap ?? EMPTY;
+  const [view, setView] = useState<"work" | "overview">("work");
   const st = useMemo(() => computeStats(s), [s]);
   const d = useMemo(() => {
     const conflicts = findConflicts(s.drafts, s.mems, s.events);
@@ -48,13 +50,17 @@ export default function App() {
           <span className="word">PrismKeep</span>
           <span className="tag">{DEMO ? "Sample data, demo mode" : "Synthetic data"}</span>
         </div>
+        <div className="views" role="group" aria-label="View">
+          <button aria-pressed={view === "work"} onClick={() => setView("work")}>Workspace</button>
+          <button aria-pressed={view === "overview"} onClick={() => setView("overview")}>Overview</button>
+        </div>
         <div className="status" role="status" aria-live="polite">
           <span className={`live ${snap ? (error ? "off" : "on") : ""}`} aria-hidden="true" />
           <span>{error ? `Memory offline: ${error}` : snap ? (DEMO ? "Demo" : "Memory connected") : "Connecting"}</span>
         </div>
       </header>
 
-      <main id="main">
+      {view === "work" ? <main id="main"><Workspace s={s} live={!!snap && !error} /></main> : <main id="main">
         <LedBoard items={d.conflicts} promises={d.promises.length} />
 
         <section className="layout" aria-label="What the founder sees">
@@ -81,7 +87,7 @@ export default function App() {
           <FlexpriceCard s={s} st={st} />
           <SnykCard s={s} st={st} />
         </section>
-      </main>
+      </main>}
     </>
   );
 }

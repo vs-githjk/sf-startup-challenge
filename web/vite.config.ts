@@ -7,6 +7,7 @@ const routes = ["memories", "drafts", "usage", "credits", "gate", "events", "hea
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173, proxy: Object.fromEntries(routes.map((r) => [`/${r}`, keep])) },
+  server: { port: 5173, fs: { allow: [".."] }, // the seed transcripts live in ../data/seed
+    proxy: Object.fromEntries(routes.map((r) => [`/${r}`, keep])) },
   build: { outDir: "dist", sourcemap: false },
 });
