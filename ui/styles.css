@@ -43,6 +43,9 @@ body {
 .hero h1 span { color: var(--muted); }
 .telemetry { position: absolute; left: 28px; right: 28px; bottom: 16px; z-index: 1; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 11px; letter-spacing: .06em; color: var(--muted); pointer-events: none; }
 .telemetry b { color: var(--cream); font-weight: 500; }
+.telemetry #t-state.on { color: var(--ok); }
+.telemetry .top { flex: 1 1 220px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.hint-tag { position: absolute; right: 28px; top: 16px; margin: 0; z-index: 1; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
 .rec { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--bad); }
 
 .stats { display: flex; gap: 40px; padding: 26px 28px 8px; flex-wrap: wrap; }

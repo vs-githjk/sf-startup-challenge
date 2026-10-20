@@ -110,3 +110,18 @@ What we do instead:
 ASCII hero (`ascii.js`): a canvas draws a prism that splits one red beam of promises into a spectrum. Brightness picks a character from a ramp. The pointer pushes glyphs away, brightens them and leaves a decaying heat trail. 30 fps cap, paused off screen, one static frame under reduced motion. Technique notes: brightness to character ramp, heat trail, canvas not DOM (21st.dev ASCII wake and dither components, ui-skills ascii-animation).
 
 Reference clone: `clone/` holds third party repos for study. It is gitignored so their manifests never count against the Snyk score. The kalman-space repo URL is still needed.
+
+## 8. The React build (web/)
+
+`web/` is the same UI rebuilt with Vite, React 19 and TypeScript 7. `ui/` stays as the plain HTML fallback; keep-api serves `web/dist` when it exists and `ui/` otherwise.
+
+```sh
+cd web
+npm ci              # exact versions from package-lock.json
+npm run dev         # http://localhost:5173, proxies the keep-api routes to 127.0.0.1:8787
+npm run build       # typecheck then bundle to web/dist
+```
+
+Add `?demo=1` for synthetic data without keep-api and `?still=1` for a locked static hero frame.
+
+Snyk risk, stated plainly: the organizers' scorer scans every manifest in the repo, and `web/package-lock.json` is one. Today the tree is 5 direct dependencies, all pinned exactly, 24 installed packages, and `npm audit` reports 0 vulnerabilities. Re-run `npm audit` and `scripts/security-score.sh --quick` after any `npm install`. If a finding above low appears and cannot be fixed, delete `web/` and keep `ui/`; the demo works with either. Do not add packages without a reason.

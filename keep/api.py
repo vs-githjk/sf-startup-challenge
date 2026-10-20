@@ -263,7 +263,8 @@ def create_app() -> FastAPI:
     def events(since: int = 0):
         return {"events": store.events(since)}
 
-    ui = Path("ui")
+    dist = Path("web/dist")  # the built React app wins; the plain ui/ folder is the fallback
+    ui = dist if (dist / "index.html").is_file() else Path("ui")
     if ui.is_dir():  # mounted last so API routes win
         app.mount("/", StaticFiles(directory=ui.resolve(), html=True), name="ui")
     return app

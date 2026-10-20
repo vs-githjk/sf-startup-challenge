@@ -210,7 +210,7 @@ function graphData(mems, drafts, conflicts) {
   const add = (n) => { if (!seen.has(n.id)) { seen.add(n.id); nodes.push(n); } };
   mems.forEach((m) => {
     add({ id: `ds:${m.dataset}`, type: "hub", r: 15, label: pretty(m.dataset) || m.dataset, text: `Dataset ${m.dataset}` });
-    add({ id: `m:${m.id}`, type: m.kind, r: 7, text: m.text });
+    add({ id: `m:${m.id}`, type: m.kind, r: 7, text: m.text, ds: m.dataset });
     links.push({ a: `ds:${m.dataset}`, b: `m:${m.id}`, type: "own" });
   });
   drafts.filter((d) => d.status === "pending").forEach((d) => add({ id: `d:${d.id}`, type: "draft", r: 9, text: `Draft to ${d.to_name}: ${d.subject}` }));
@@ -220,6 +220,10 @@ function graphData(mems, drafts, conflicts) {
 
 function renderGraph(mems, drafts, conflicts) {
   const { nodes, links } = graphData(mems, drafts, conflicts);
+  // feed the ASCII hero: every non-hub node is a star, conflict links are drawn between them
+  dispatchEvent(new CustomEvent("prismkeep:graph", { detail: {
+    nodes: nodes.filter((n) => n.type !== "hub"),
+    links: links.filter((l) => l.type === "conflict") } }));
   const sig = nodes.map((n) => n.id).join("|") + links.length;
   $("c-graph").textContent = `${nodes.length} nodes, ${links.length} links`;
   if (sig === G.sig) return;
