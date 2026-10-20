@@ -1,2 +1,7 @@
 #!/usr/bin/env bash
-exec uv run --project "$(dirname "$0")/.." python -m keep.cli "$@"
+# keep CLI shim: works from any directory and through a symlink (e.g. ~/.local/bin/keep).
+set -euo pipefail
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do dir="$(cd "$(dirname "$src")" && pwd)"; src="$(readlink "$src")"; [[ $src != /* ]] && src="$dir/$src"; done
+root="$(cd "$(dirname "$src")/.." && pwd)"
+PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}" exec uv run --quiet --project "$root" python -m keep.cli "$@"
