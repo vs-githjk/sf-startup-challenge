@@ -74,7 +74,7 @@ class CogneeBackend:
             r.raise_for_status()
             # The run's item list holds other items of the dataset too; find ours by the name
             # Cognee gives a text item: "text_<md5 of the utf-8 text>.txt".
-            name = "text_" + hashlib.md5(text.encode("utf-8")).hexdigest() + ".txt"
+            name = "text_" + hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest() + ".txt"
             r = await c.get("/api/v1/datasets")
             r.raise_for_status()
             for ds in r.json():
