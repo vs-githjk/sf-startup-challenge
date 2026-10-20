@@ -46,3 +46,6 @@ outbox/
 # keep runtime data
 .keep/
 outbox/
+
+# local agent worktrees
+.claude/
