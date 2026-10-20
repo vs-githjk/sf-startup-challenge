@@ -15,9 +15,10 @@ def tokens(s: str) -> set[str]:
 
 class MemoryBackend(Protocol):
     async def remember(self, dataset: str, text: str) -> str | None: ...
-    async def recall(self, datasets: list[str], query: str, top: int) -> list[dict]: ...
+    async def recall(self, datasets: list[str], query: str, top: int) -> list[dict]:
+        """Hits as {text, data_id, score}; data_id is a ledger id or a Cognee data id."""
     async def forget(self, cognee_data_id: str | None, dataset: str) -> None: ...
-    async def improve(self, dataset: str, feedback: str) -> None: ...
+    async def improve(self, dataset: str, feedback: str) -> list[dict]: ...
 
 
 class LocalBackend:
@@ -44,7 +45,7 @@ class LocalBackend:
         return None
 
     async def improve(self, dataset, feedback):
-        return None
+        return []
 
 
 class CogneeBackend:
@@ -55,27 +56,25 @@ class CogneeBackend:
 
     async def remember(self, dataset, text):
         import cognee
-        res = await cognee.remember(text, dataset_name=dataset, run_in_background=False,
-                                    self_improvement=False)
-        for item in getattr(res, "items", None) or []:
-            if isinstance(item, dict) and item.get("id"):
-                return str(item["id"])
-        return await self._newest_data_id(dataset)
-
-    async def _newest_data_id(self, dataset):
-        import cognee
+        from cognee.modules.ingestion.data_types import TextData
+        await cognee.remember(text, dataset_name=dataset, run_in_background=False,
+                              self_improvement=False)
+        # The run's item list holds other items of the dataset too; find ours by the content
+        # hash Cognee itself gives this text.
+        content_hash = TextData(text).get_identifier()
         for ds in await cognee.datasets.list_datasets():
-            if getattr(ds, "name", None) == dataset:
-                data = await cognee.datasets.list_data(ds.id)
-                if data:
-                    newest = max(data, key=lambda d: str(getattr(d, "created_at", "") or ""))
-                    return str(newest.id)
-        return None
+            if ds.name == dataset:
+                for d in await cognee.datasets.list_data(ds.id):
+                    if content_hash in (d.content_hash, d.raw_content_hash):
+                        return str(d.id)
+        raise LookupError("remembered text not found in its Cognee dataset")
 
     async def recall(self, datasets, query, top):
         import cognee
-        # stored facts, not an LLM answer: keeps data_id/kind and lets forgotten facts be filtered
-        raw = await cognee.recall(query, cognee.SearchType.CHUNKS, datasets=datasets, top_k=top)
+        # Stored chunks, not an LLM answer, each tagged with the Cognee data id it came from.
+        # ponytail: access control is off, so Cognee keeps one shared store and its dataset filter
+        # leaks (and raises on unknown names); search all of it, keep-api scopes hits by its ledger.
+        raw = await cognee.recall(query, cognee.SearchType.CHUNKS, top_k=top)
         out = []
         for i, r in enumerate(raw or []):
             if hasattr(r, "model_dump"):
@@ -84,9 +83,8 @@ class CogneeBackend:
                 d = dict(r) if isinstance(r, dict) else {"text": str(r)}
             text = next((str(d[f]) for f in TEXT_FIELDS if d.get(f)), "")
             if text:
-                out.append({"text": text, "dataset": d.get("dataset_name") or datasets[0],
-                            "data_id": None, "score": float(d.get("score") or 1.0 / (i + 1)),
-                            "kind": None})
+                out.append({"text": text, "data_id": (d.get("metadata") or {}).get("data_id"),
+                            "score": float(d.get("score") or 1.0 / (i + 1))})
         return out
 
     async def forget(self, cognee_data_id, dataset):
@@ -96,7 +94,10 @@ class CogneeBackend:
 
     async def improve(self, dataset, feedback):
         import cognee
-        await cognee.improve(dataset=dataset)
+        # Without session ids every default stage skips; conflict review is the one that reads the graph.
+        res = await cognee.improve(dataset=dataset, review_conflicts=True)
+        return [{"stage": st.stage, "status": st.status, "reason": st.reason, "counts": st.counts}
+                for st in res.stages]
 
 
 def make_backend(store: Store) -> MemoryBackend:

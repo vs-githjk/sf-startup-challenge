@@ -61,7 +61,7 @@ def improve(dataset: str, feedback: str) -> dict:
 def build(role: str) -> Agent:
     agent_id, api_key = load_agent_config(role)
     adapter = LangGraphAdapter(
-        config=LangGraphAdapterConfig(custom_section=(PROMPTS / ROLES[role]).read_text()),
+        config=LangGraphAdapterConfig(custom_section=(PROMPTS / ROLES[role]).read_text(encoding="utf-8")),
         llm=ChatAnthropic(model=MODEL, max_tokens=2048),
         additional_tools=[remember, recall, forget, improve],
         capabilities={Capability.TASKS},
