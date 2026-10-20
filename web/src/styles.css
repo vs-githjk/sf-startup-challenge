@@ -5,7 +5,7 @@
   --ink: #EEF3F8; --panel: rgba(255, 255, 255, .72); --panel-2: rgba(255, 255, 255, .55); --line: rgba(14, 23, 38, .1);
   --cream: #0E1726; --muted: #4F5B6B; --brass: #0891B2; --brass-dim: rgba(8, 145, 178, .4);
   --bad: #A50F36; --ok: #036B4C; --info: #0B5F78;
-  --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --display: "Geist", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --body: "Geist", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace;
   --ease: cubic-bezier(.2, .7, .2, 1);
@@ -56,14 +56,14 @@ h2 { text-wrap: balance; margin: 0; font: 500 22px/1.2 var(--display); }
 .rows > li:first-child { border-top: 0; }
 .rows > li::after { content: ""; position: absolute; inset: 0 -8px; background: var(--brass); opacity: 0; pointer-events: none; }
 .rows > li.fresh::after { animation: flash 1.6s ease-out; }
-.empty { color: var(--muted); font: italic 400 16px var(--display); }
+.empty { color: var(--muted); font: 400 16px var(--body); }
 
 .enter { animation: rise .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
 .panel { animation: rise .6s var(--ease) both; }
 .col > .panel:nth-child(2) { animation-delay: .08s; } .col > .panel:nth-child(3) { animation-delay: .16s; }
 .feed { animation-delay: .24s; }
 
-.quote { font: italic 400 19px/1.35 var(--display); }
+.quote { font: 500 17px/1.45 var(--body); }
 .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; font: 400 12px var(--mono); color: var(--muted); }
 .chip { font: 500 11px var(--mono); padding: 1px 8px; border: 1px solid currentColor; border-radius: 99px; color: var(--muted); }
 .chip.promise, .chip.pending, .chip.finding { color: var(--brass); }
@@ -172,7 +172,7 @@ h2 { text-wrap: balance; margin: 0; font: 500 22px/1.2 var(--display); }
 .tool .breaks b { color: var(--cream); font-weight: 600; }
 .kv { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; }
 .kv span { color: var(--muted); } .kv b { font: 500 12.5px var(--mono); text-align: right; overflow-wrap: anywhere; }
-.tool .chips { display: flex; flex-wrap: wrap; gap: 6px; } .tool .none { color: var(--muted); font-style: italic; font-size: 13px; }
+.tool .chips { display: flex; flex-wrap: wrap; gap: 6px; } .tool .none { color: var(--muted); font-size: 14px; }
 .tool .note { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
 .tool .agents { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
 .tool .agents li { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 13px; padding-bottom: 7px; }
@@ -229,7 +229,7 @@ h2, .subject { font-family: var(--body); letter-spacing: -.02em; }
 .agents li { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 14px; padding-bottom: 8px; }
 .agents em { font: 400 12px var(--mono); color: var(--muted); font-style: normal; }
 .agents i { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--brass); transform-origin: left; border-radius: 99px; }
-.agents .none { color: var(--muted); font: italic 400 16px var(--display); }
+.agents .none { color: var(--muted); font: 400 16px var(--body); }
 @media (max-width: 700px) { .links li { grid-template-columns: 14px 1fr; } .links em, .links .fact { grid-column: 2; } }
 .hero { display: block; min-height: clamp(340px, 42vh, 440px); }
 .hero .copy { max-width: 640px; }
@@ -312,3 +312,47 @@ h1, h2 { text-wrap: balance; }
 .hero .sub { margin-top: 12px; }
 .steps li, .tile, .rail-row { transition: transform .2s ease, border-color .2s ease, background .2s ease; }
 .steps li:hover { transform: translateY(-2px); border-color: rgba(8, 145, 178, .5); }
+
+
+/* ---- clean type, no italics: the reference's scale ---- */
+body { font-size: 16.5px; line-height: 1.55; }
+.panel { border-radius: 24px; padding: 24px 28px; }
+.panel h2 { font: 500 21px/1.2 var(--body); letter-spacing: -.02em; }
+.hint { font-size: 15.5px; color: var(--muted); margin: 6px 0 16px; line-height: 1.5; }
+.count { font: 500 12.5px var(--mono); }
+.quote { font: 500 17px/1.45 var(--body); letter-spacing: -.01em; }
+.subject { font: 500 17px/1.35 var(--body); }
+.body { font-size: 15.5px; line-height: 1.55; -webkit-line-clamp: 3; }
+.meta { font-size: 12.5px; margin-top: 6px; }
+.empty, .agents .none { font: 400 16px/1.5 var(--body); color: var(--muted); }
+.chip { font: 500 12px var(--mono); border: 0; padding: 3px 10px; border-radius: 99px; background: rgba(8, 145, 178, .12); color: var(--info); }
+.chip.risk, .chip.denied, .chip.blocked { background: rgba(165, 15, 54, .1); color: var(--bad); }
+.chip.pending { background: rgba(217, 119, 6, .14); color: #92400E; }
+.chip.approved, .chip.sent, .chip.allowed { background: rgba(5, 150, 105, .12); color: var(--ok); }
+.chip.claim { background: rgba(14, 23, 38, .07); color: var(--muted); }
+.rows > li { padding: 14px 0; }
+.links li { padding: 14px 0; } .links .fact { font-size: 15.5px; }
+.steps p { font-size: 14px; } .steps b { font-size: 16px; }
+.agents li { font-size: 15.5px; }
+.pair .said .quote { text-decoration: underline; text-decoration-color: var(--bad); text-underline-offset: 4px; text-decoration-thickness: 2px; color: var(--muted); }
+.word { font-family: var(--body); font-weight: 600; font-size: 19px; }
+.hero h1 { font-weight: 500; }
+.hero h1 span, .hero h1 em { color: var(--muted); font-style: normal; }
+
+/* ---- memory map, cleaner ---- */
+#graph text { font: 500 14px var(--body); fill: var(--cream); }
+#graph .col { font: 500 11px var(--mono); fill: var(--muted); letter-spacing: .08em; }
+#graph .hubbox { fill: #fff; stroke: rgba(8, 145, 178, .45); stroke-width: 1.2; }
+#graph .hubtext { font: 500 13.5px var(--body); }
+#graph .membox { fill: rgba(255, 255, 255, .92); stroke: rgba(14, 23, 38, .08); }
+#graph .membox.hit { fill: rgba(255, 241, 244, .95); stroke: rgba(165, 15, 54, .4); }
+#graph .pill { fill: rgba(14, 23, 38, .06); }
+#graph .pilltext { font: 500 11.5px var(--mono); fill: var(--muted); text-anchor: middle; }
+#graph .pill.promise { fill: rgba(8, 145, 178, .12); } #graph .pilltext.promise { fill: var(--info); }
+#graph .pill.risk { fill: rgba(165, 15, 54, .1); } #graph .pilltext.risk { fill: var(--bad); }
+#graph .pill.finding { fill: rgba(217, 119, 6, .14); } #graph .pilltext.finding { fill: #92400E; }
+#graph .pill.decision, #graph .pill.correction { fill: rgba(5, 150, 105, .12); } #graph .pilltext.decision, #graph .pilltext.correction { fill: var(--ok); }
+#graph .draftbox { fill: #fff; stroke: rgba(14, 23, 38, .18); }
+#graph .draftbox.hit { stroke: var(--bad); stroke-width: 1.6; }
+#graph .draftbox + text { fill: var(--cream); font: 500 13px var(--body); }
+#graph .edge { stroke: rgba(14, 23, 38, .14); }
