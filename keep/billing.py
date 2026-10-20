@@ -43,15 +43,16 @@ def remote_balance(customer_id: str, client: httpx.Client | None = None) -> floa
         with client:
             r = client.get(f"/customers/external/{customer_id}")
             r.raise_for_status()
-            r = client.get(f"/customers/{r.json()['id']}/wallets",
-                           params={"include_real_time_balance": "true"})
+            r = client.get(f"/customers/{r.json()['id']}/wallets")
             r.raise_for_status()
             data = r.json()
             wallets = data if isinstance(data, list) else data.get("items") or []
             if not wallets:
                 return None
-            w = wallets[0]
-            return float(w.get("real_time_credit_balance") or w["credit_balance"])
+            # only this endpoint subtracts the current period's unbilled usage
+            r = client.get(f"/wallets/{wallets[0]['id']}/balance/real-time")
+            r.raise_for_status()
+            return float(r.json()["real_time_credit_balance"])
     except Exception as exc:  # the gate must still answer when Flexprice is down
         log.warning("flexprice_balance=unavailable err=%s", type(exc).__name__)
         return None
