@@ -6,7 +6,14 @@
       "Bash(band:*)",
       "Bash(band *)",
       "Bash(jam:*)",
-      "Bash(jam *)"
+      "Bash(jam *)",
+      "mcp__prism__list_recent_meetings",
+      "mcp__prism__get_meeting",
+      "mcp__prism__search_meetings",
+      "mcp__prism__get_meeting_documents"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "prism"
+  ]
 }
