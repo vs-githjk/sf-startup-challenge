@@ -16,11 +16,16 @@ fi
 [ -n "${SNYK_TOKEN:-}" ] || { echo "SNYK_TOKEN not set (put a Snyk PAT in .env)"; exit 1; }
 
 if [ "${1:-}" = "--quick" ]; then
+  # Snyk exit codes: 0 clean, 1 findings, 2 or 3 error. Never report an error as clean.
+  status=0
   echo "== snyk test --all-projects (dependencies)"
-  snyk test --all-projects --severity-threshold=low || true
+  snyk test --all-projects --severity-threshold=low || rc=$?
+  [ "${rc:-0}" -le 1 ] || { echo "snyk test failed (exit $rc): NOT a clean result"; status=2; }
+  rc=0
   echo "== snyk code test (first-party code)"
-  snyk code test || true
-  exit 0
+  snyk code test || rc=$?
+  [ "${rc:-0}" -le 1 ] || { echo "snyk code test failed (exit $rc): NOT a clean result"; status=2; }
+  exit "$status"
 fi
 
 SCORER="$ROOT/.app-security-score"
