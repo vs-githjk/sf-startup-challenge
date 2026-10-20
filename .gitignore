@@ -54,3 +54,9 @@ outbox/
 # third party reference clones (see clone/README.md)
 clone/*
 !clone/README.md
+
+# local agent logs
+.listener.log
+.brain.log
+.listener-debug.log
+.keep-api.log
